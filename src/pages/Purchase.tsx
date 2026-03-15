@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 import { useStore } from '../store/useStore';
 import type { Product, PaymentMethod } from '../types';
 import { showToast } from '../components/Toast';
+import { logger } from '../utils/logger';
 import { Wallet, CreditCard, Upload, X, CheckCircle2, AlertCircle, ShieldCheck, ArrowRight, MessageCircle } from 'lucide-react';
 
 export const Purchase = () => {
@@ -64,16 +65,35 @@ export const Purchase = () => {
 
   const handleWalletPurchase = async () => {
     if (!user || !product) return;
+
+    logger.info('Purchase', 'Wallet purchase initiated', {
+      userId: user.id,
+      productId: product.id,
+      productName: product.name,
+      price: product.price_mru
+    });
+
     setPurchasing(true);
     try {
+      logger.debug('Purchase', 'Calling create_wallet_purchase RPC');
       const { data, error } = await supabase.rpc('create_wallet_purchase', {
         p_user_id: user.id,
         p_product_id: product.id,
       });
 
-      if (error) throw error;
+      if (error) {
+        logger.error('Purchase', 'Wallet purchase RPC error', error);
+        throw error;
+      }
+
+      logger.debug('Purchase', 'Purchase response received', data);
 
       if (data.success) {
+        logger.success('Purchase', 'Wallet purchase successful', {
+          code: data.code,
+          productName: data.product_name
+        });
+
         updateWalletBalance(user.wallet_balance - product.price_mru);
 
         setPurchaseData({
@@ -88,12 +108,15 @@ export const Purchase = () => {
         setShowSuccessModal(true);
         showToast('تمت عملية الشراء بنجاح', 'success');
       } else {
+        logger.warn('Purchase', 'Wallet purchase failed', { message: data.message });
         showToast(data.message, 'error');
       }
     } catch (error: any) {
+      logger.error('Purchase', 'Wallet purchase error', error);
       showToast(error.message || 'فشلت عملية الشراء', 'error');
     } finally {
       setPurchasing(false);
+      logger.debug('Purchase', 'Wallet purchase attempt completed');
     }
   };
 
