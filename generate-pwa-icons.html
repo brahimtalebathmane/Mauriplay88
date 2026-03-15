@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MauriPlay PWA Icon Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        h1 {
+            color: #00ff88;
+            text-align: center;
+        }
+        .container {
+            background: #2a2a2a;
+            padding: 30px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .instructions {
+            background: #1a3a3a;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #00ff88;
+        }
+        button {
+            background: #00ff88;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #00dd77;
+        }
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background: #1a4a1a;
+            border: 1px solid #00ff88;
+            display: block !important;
+        }
+        .error {
+            background: #4a1a1a;
+            border: 1px solid #ff4444;
+            display: block !important;
+        }
+        .preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .preview-item {
+            text-align: center;
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .preview-item canvas {
+            max-width: 100%;
+            border: 2px solid #444;
+            border-radius: 8px;
+        }
+        .preview-item h3 {
+            margin: 10px 0 5px 0;
+            color: #00ff88;
+        }
+        code {
+            background: #1a1a1a;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #00ff88;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 MauriPlay PWA Icon Generator</h1>
+
+    <div class="container">
+        <div class="instructions">
+            <h2>📋 Instructions</h2>
+            <ol>
+                <li>This tool will generate PNG icons with the official M7 logo on a black background</li>
+                <li>Click "Generate All Icons" to create all required sizes</li>
+                <li>Download each icon and save it to the <code>/public</code> directory</li>
+                <li>The icons will have proper transparency handling for PWA</li>
+            </ol>
+            <p><strong>Official Logo URL:</strong> <code>https://i.postimg.cc/VJ87tfYs/Logo.png</code></p>
+        </div>
+
+        <button onclick="generateAllIcons()">🚀 Generate All Icons</button>
+        <button onclick="downloadAll()">📥 Download All Icons</button>
+
+        <div id="status"></div>
+
+        <div class="preview-grid" id="previewGrid"></div>
+    </div>
+
+    <script>
+        const LOGO_URL = 'https://i.postimg.cc/VJ87tfYs/Logo.png';
+        const canvases = {};
+
+        const sizes = [
+            { name: 'icon-72.png', size: 72, padding: 10 },
+            { name: 'icon-96.png', size: 96, padding: 12 },
+            { name: 'icon-128.png', size: 128, padding: 16 },
+            { name: 'icon-144.png', size: 144, padding: 18 },
+            { name: 'icon-152.png', size: 152, padding: 20 },
+            { name: 'icon-192.png', size: 192, padding: 24 },
+            { name: 'icon-384.png', size: 384, padding: 48 },
+            { name: 'icon-512.png', size: 512, padding: 64 },
+            { name: 'apple-touch-icon.png', size: 180, padding: 20 },
+            { name: 'icon-512-maskable.png', size: 512, padding: 0 }
+        ];
+
+        function showStatus(message, isError = false) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = isError ? 'error' : 'success';
+        }
+
+        function loadImage(url) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = url;
+            });
+        }
+
+        async function generateIcon(config) {
+            try {
+                const { name, size, padding } = config;
+
+                const canvas = document.createElement('canvas');
+                canvas.width = size;
+                canvas.height = size;
+                const ctx = canvas.getContext('2d');
+
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, size, size);
+
+                const logo = await loadImage(LOGO_URL);
+
+                const logoSize = size - (padding * 2);
+                const x = padding;
+                const y = padding;
+
+                ctx.drawImage(logo, x, y, logoSize, logoSize);
+
+                canvases[name] = canvas;
+
+                return canvas;
+            } catch (error) {
+                console.error(`Error generating ${config.name}:`, error);
+                throw error;
+            }
+        }
+
+        async function generateAllIcons() {
+            showStatus('⏳ Generating icons...', false);
+            const previewGrid = document.getElementById('previewGrid');
+            previewGrid.innerHTML = '';
+
+            try {
+                for (const config of sizes) {
+                    const canvas = await generateIcon(config);
+
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'preview-item';
+
+                    const title = document.createElement('h3');
+                    title.textContent = config.name;
+
+                    const sizeLabel = document.createElement('p');
+                    sizeLabel.textContent = `${config.size}×${config.size}px`;
+                    sizeLabel.style.color = '#888';
+
+                    const previewCanvas = canvas.cloneNode();
+                    previewCanvas.getContext('2d').drawImage(canvas, 0, 0);
+
+                    const downloadBtn = document.createElement('button');
+                    downloadBtn.textContent = '⬇️ Download';
+                    downloadBtn.style.fontSize = '12px';
+                    downloadBtn.style.padding = '8px 16px';
+                    downloadBtn.onclick = () => downloadIcon(config.name);
+
+                    previewItem.appendChild(title);
+                    previewItem.appendChild(previewCanvas);
+                    previewItem.appendChild(sizeLabel);
+                    previewItem.appendChild(downloadBtn);
+                    previewGrid.appendChild(previewItem);
+                }
+
+                showStatus(`✅ Successfully generated ${sizes.length} icons! Click individual Download buttons or "Download All Icons".`, false);
+            } catch (error) {
+                showStatus(`❌ Error: ${error.message}`, true);
+            }
+        }
+
+        function downloadIcon(name) {
+            const canvas = canvases[name];
+            if (!canvas) {
+                showStatus('❌ Icon not generated yet. Click "Generate All Icons" first.', true);
+                return;
+            }
+
+            canvas.toBlob((blob) => {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = name;
+                a.click();
+                URL.revokeObjectURL(url);
+            }, 'image/png', 1.0);
+        }
+
+        async function downloadAll() {
+            if (Object.keys(canvases).length === 0) {
+                showStatus('❌ No icons generated yet. Click "Generate All Icons" first.', true);
+                return;
+            }
+
+            showStatus('⏳ Downloading all icons...', false);
+
+            for (const name of Object.keys(canvases)) {
+                downloadIcon(name);
+                await new Promise(resolve => setTimeout(resolve, 300));
+            }
+
+            showStatus('✅ All icons downloaded! Save them to your /public directory.', false);
+        }
+    </script>
+</body>
+</html>
