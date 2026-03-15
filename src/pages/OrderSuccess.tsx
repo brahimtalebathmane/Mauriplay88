@@ -44,7 +44,7 @@ export const OrderSuccess = () => {
         product: data.product || {
           id: '',
           platform_id: '',
-          name: 'منتج محذوف',
+          name: 'منتج محذ;وف',
           price_mru: 0,
           is_deleted: true,
           created_at: '',
