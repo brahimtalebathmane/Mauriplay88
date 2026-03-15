@@ -1,0 +1,58 @@
+name: AI Project Automation
+
+on:
+  push:
+    branches:
+      - main  # تشغيل تلقائي عند أي Push على main
+
+jobs:
+  ai_update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Run OpenAI AI to update project
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          pip install --upgrade openai
+          python <<EOF
+          import os, openai, pathlib
+
+          openai.api_key = os.environ["OPENAI_API_KEY"]
+
+          files = [str(p) for p in pathlib.Path(".").rglob("*") if p.is_file()]
+
+          prompt = f"""
+          You are an AI developer. Review the following Vue 3 project files: {files}.
+          1. Generate missing source files (components, pages, hooks, utils, types)
+          2. Configure Supabase client
+          3. Implement vue-router with auth and route guards
+          4. Setup Pinia store and auth
+          5. Fix TypeScript strict mode issues
+          6. Add error handling
+          7. Setup PWA manifest and icons
+          8. Optimize build configuration
+          9. Suggest fixes for any errors you find
+          Output the changes as a patch or diff ready to commit.
+          """
+
+          response = openai.ChatCompletion.create(
+              model="gpt-4",
+              messages=[{"role": "user", "content": prompt}],
+              temperature=0
+          )
+
+          # حفظ التعديلات في ملف مؤقت (يمكنك تعديل هذا الجزء لاحقًا ليطبق مباشرة)
+          with open("ai_suggestions.txt", "w") as f:
+              f.write(response.choices[0].message.content)
+          EOF
+
+      - name: Commit changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "AI updates from OpenAI"
+          git push
