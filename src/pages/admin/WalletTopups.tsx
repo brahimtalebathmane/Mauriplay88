@@ -63,18 +63,24 @@ export const WalletTopups = () => {
 
   const saveNotice = async () => {
     try {
-      const { error } = await supabase
-        .from('settings')
-        .upsert({ key: 'wallet_notice', value: notice });
+      // استخدام RPC لتجاوز قيود الـ RLS المباشرة على الجدول
+      const { data, error } = await supabase.rpc('save_app_setting', { 
+        p_key: 'wallet_notice', 
+        p_value: notice 
+      });
 
       if (error) throw error;
 
-      showToast('تم حفظ الإشعار بنجاح', 'success');
-      setOriginalNotice(notice);
-      setEditingNotice(false);
-    } catch (error) {
+      if (data?.success) {
+        showToast('تم حفظ الإشعار بنجاح', 'success');
+        setOriginalNotice(notice);
+        setEditingNotice(false);
+      } else {
+        showToast(data?.message || 'فشل حفظ الإشعار', 'error');
+      }
+    } catch (error: any) {
       console.error('Failed to save notice:', error);
-      showToast('فشل حفظ الإشعار', 'error');
+      showToast('فشل حفظ الإشعار - تأكد من صلاحيات الأدمن', 'error');
     }
   };
 
@@ -101,7 +107,6 @@ export const WalletTopups = () => {
         throw error;
       }
 
-      // Transform data to match expected format
       const transformedData = (data || []).map((item: any) => ({
         ...item,
         user: {
