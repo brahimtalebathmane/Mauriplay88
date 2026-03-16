@@ -17,9 +17,16 @@ export const useStore = create<StoreState>()(
       isLoggedIn: false,
       user: null,
       setUser: (user) => {
+        // نضمن هنا أن القيمة دائمًا موجودة حتى لو نسيتها قاعدة البيانات
+        if (user) {
+          user.is_verified = user.is_verified ?? (user as any).verified ?? false;
+        }
         set({ user, isLoggedIn: !!user });
       },
       setSession: (user, isLoggedIn) => {
+        if (user) {
+          user.is_verified = user.is_verified ?? (user as any).verified ?? false;
+        }
         set({ user, isLoggedIn });
       },
       logout: () => {
