@@ -44,13 +44,14 @@ export const Platforms = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user?.phone_number) {
+    if (!user) {
       showToast('غير مصرح', 'error');
       return;
     }
 
     try {
       if (editingId) {
+        // تحديث منصة موجودة
         const { data, error } = await supabase.rpc('admin_update_platform', {
           p_admin_phone: user.phone_number,
           p_platform_id: editingId,
@@ -69,9 +70,22 @@ export const Platforms = () => {
           return;
         }
       } else {
-        const { error } = await supabase.from('platforms').insert([formData]);
+        // --- التعديل هنا: استخدام الدالة الجديدة لتجنب خطأ 401 ---
+        const { data, error } = await supabase.rpc('add_platform_v2', {
+          p_name: formData.name,
+          p_logo_url: formData.logo_url,
+          p_website_url: formData.website_url || null,
+          p_tutorial_url: formData.tutorial_video_url || null
+        });
+
         if (error) throw error;
-        showToast('تمت إضافة المنصة', 'success');
+
+        if (data?.success) {
+          showToast('تمت إضافة المنصة بنجاح', 'success');
+        } else {
+          showToast(data?.message || 'فشلت الإضافة', 'error');
+          return;
+        }
       }
 
       setShowForm(false);
@@ -79,6 +93,7 @@ export const Platforms = () => {
       setFormData({ name: '', logo_url: '', website_url: '', tutorial_video_url: '' });
       loadPlatforms();
     } catch (error: any) {
+      console.error('Submit error:', error);
       showToast(editingId ? 'فشل التحديث' : 'فشلت الإضافة', 'error');
     }
   };
