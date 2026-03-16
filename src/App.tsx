@@ -19,7 +19,6 @@ import AccountRecovery from './pages/AccountRecovery';
 import VerifyRecoveryOTP from './pages/VerifyRecoveryOTP';
 import ResetPin from './pages/ResetPin';
 
-// شاشة تحميل بسيطة تظهر أثناء استعادة الجلسة
 const LoadingScreen = () => (
   <div className="min-h-screen bg-black flex items-center justify-center">
     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
@@ -28,22 +27,50 @@ const LoadingScreen = () => (
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn, user, isHydrated } = useStore();
-  const location = useLocation();
-
-  // منع التوجيه العشوائي حتى تكتمل قراءة البيانات من localStorage
+  
   if (!isHydrated) return <LoadingScreen />;
 
-  console.log('ProtectedRoute:', { isLoggedIn, user: user?.phone_number, path: location.pathname });
+  // التأكد من وجود المستخدم والحقل الصحيح
+  const isVerified = user?.is_verified === true;
 
   if (!isLoggedIn || !user) {
-    console.log('ProtectedRoute: No user, redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
-  if (!user.is_verified) {
-    console.log('ProtectedRoute: User not verified, redirecting to OTP');
+  if (!isVerified) {
     return <Navigate to="/verify-otp" replace />;
   }
+
+  return <>{children}</>;
+};
+
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isLoggedIn, user, isHydrated } = useStore();
+  const location = useLocation();
+
+  if (!isHydrated) return <LoadingScreen />;
+
+  // تجنب الحلقة المفرغة: إذا كنت في صفحة تسجيل الدخول بالفعل لا تقم بالتحويل
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  const isVerified = user?.is_verified === true;
+
+  if (isLoggedIn && user && isAuthPage) {
+    if (isVerified) return <Navigate to="/" replace />;
+    return <Navigate to="/verify-otp" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+const OTPRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isLoggedIn, user, isHydrated } = useStore();
+
+  if (!isHydrated) return <LoadingScreen />;
+
+  const isVerified = user?.is_verified === true;
+
+  if (!isLoggedIn || !user) return <Navigate to="/login" replace />;
+  if (isVerified) return <Navigate to="/" replace />;
 
   return <>{children}</>;
 };
@@ -53,54 +80,11 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 
   if (!isHydrated) return <LoadingScreen />;
 
-  console.log('AdminRoute:', { isLoggedIn, user: user?.phone_number, role: user?.role });
-
-  if (!isLoggedIn || !user) {
-    console.log('AdminRoute: No user, redirecting to login');
-    return <Navigate to="/login" replace />;
-  }
-
-  if (!user.is_verified) {
-    console.log('AdminRoute: User not verified, redirecting to OTP');
-    return <Navigate to="/verify-otp" replace />;
-  }
-
-  if (user.role !== 'admin') {
-    console.log('AdminRoute: User not admin, redirecting to home');
-    return <Navigate to="/" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isLoggedIn, user, isHydrated } = useStore();
-
-  if (!isHydrated) return <LoadingScreen />;
-
-  console.log('PublicRoute:', { isLoggedIn, user: user?.phone_number, verified: user?.is_verified });
-
-  if (isLoggedIn && user) {
-    // إذا كان مسجل ومفعل يذهب للرئيسية
-    if (user.is_verified) {
-      console.log('PublicRoute: User verified, redirecting to home');
-      return <Navigate to="/" replace />;
-    }
-    // إذا كان مسجل وغير مفعل يذهب لصفحة الـ OTP
-    return <Navigate to="/verify-otp" replace />;
-  }
-
-  return <>{children}</>;
-};
-
-// مكون حماية خاص لصفحة الـ OTP
-const OTPRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isLoggedIn, user, isHydrated } = useStore();
-
-  if (!isHydrated) return <LoadingScreen />;
+  const isVerified = user?.is_verified === true;
 
   if (!isLoggedIn || !user) return <Navigate to="/login" replace />;
-  if (user.is_verified) return <Navigate to="/" replace />;
+  if (!isVerified) return <Navigate to="/verify-otp" replace />;
+  if (user.role !== 'admin') return <Navigate to="/" replace />;
 
   return <>{children}</>;
 };
