@@ -17,15 +17,17 @@ export const useStore = create<StoreState>()(
       isLoggedIn: false,
       user: null,
       setUser: (user) => {
-        // نضمن هنا أن القيمة دائمًا موجودة حتى لو نسيتها قاعدة البيانات
         if (user) {
-          user.is_verified = user.is_verified ?? (user as any).verified ?? false;
+          // إصلاح جوهري: التأكد من قراءة حالة التفعيل حتى لو جاءت بأسماء مختلفة من الـ RPC
+          const verifiedStatus = (user as any).is_verified ?? (user as any).verified ?? false;
+          user.is_verified = verifiedStatus;
         }
         set({ user, isLoggedIn: !!user });
       },
       setSession: (user, isLoggedIn) => {
         if (user) {
-          user.is_verified = user.is_verified ?? (user as any).verified ?? false;
+          const verifiedStatus = (user as any).is_verified ?? (user as any).verified ?? false;
+          user.is_verified = verifiedStatus;
         }
         set({ user, isLoggedIn });
       },
