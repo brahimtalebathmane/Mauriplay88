@@ -42,16 +42,12 @@ export const Platforms = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!user) {
-      showToast('غير مصرح - الرجاء تسجيل الدخول', 'error');
-      return;
-    }
+    if (!user) return showToast('الرجاء تسجيل الدخول أولاً', 'error');
 
     try {
-      // تجهيز البيانات بشكل يضمن عدم إرسال نصوص فارغة للحقول الاختيارية
+      setLoading(true);
       const platformData = {
         name: formData.name,
         logo_url: formData.logo_url,
@@ -60,33 +56,52 @@ export const Platforms = () => {
         is_deleted: false,
       };
 
+      let error;
       if (editingId) {
-        // التعديل المباشر في الجدول (يعمل بفضل سياسة RLS للأدمن)
-        const { error } = await supabase
+        // التعديل
+        const { error: updateError } = await supabase
           .from('platforms')
           .update(platformData)
           .eq('id', editingId);
-
-        if (error) throw error;
-        showToast('تم تحديث المنصة بنجاح', 'success');
+        error = updateError;
       } else {
-        // الإضافة المباشرة في الجدول
-        const { error } = await supabase
+        // الإضافة
+        const { error: insertError } = await supabase
           .from('platforms')
           .insert([platformData]);
-
-        if (error) throw error;
-        showToast('تمت إضافة المنصة بنجاح', 'success');
+        error = insertError;
       }
 
-      // إعادة ضبط النموذج وتحديث القائمة
-      setShowForm(false);
-      setEditingId(null);
-      setFormData({ name: '', logo_url: '', website_url: '', tutorial_video_url: '' });
-      await loadPlatforms();
+      if (error) throw error;
+
+      showToast(editingId ? 'تم التحديث بنجاح' : 'تمت الإضافة بنجاح', 'success');
+      handleCancelEdit();
+      await loadPlatforms(); // تحديث القائمة فوراً
     } catch (error: any) {
-      console.error('Submit error:', error);
-      showToast(error.message || 'فشلت العملية - تحقق من الصلاحيات', 'error');
+      console.error('Platform Error:', error);
+      showToast(error.message || 'حدث خطأ في الصلاحيات', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('هل أنت متأكد؟')) return;
+
+    try {
+      // نستخدم update وليس delete لأننا نعتمد is_deleted
+      const { error } = await supabase
+        .from('platforms')
+        .update({ is_deleted: true })
+        .eq('id', id);
+
+      if (error) throw error;
+
+      showToast('تم الحذف بنجاح', 'success');
+      // تحديث الحالة محلياً فوراً لسرعة الاستجابة
+      setPlatforms(prev => prev.filter(p => p.id !== id));
+    } catch (error: any) {
+      showToast('فشل الحذف: ' + error.message, 'error');
     }
   };
 
