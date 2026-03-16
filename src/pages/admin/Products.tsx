@@ -51,13 +51,14 @@ export const Products = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!user?.phone_number) {
+    if (!user) {
       showToast('غير مصرح', 'error');
       return;
     }
 
     try {
       if (editingId) {
+        // تحديث المنتج عبر RPC
         const { data, error } = await supabase.rpc('admin_update_product', {
           p_admin_phone: user.phone_number,
           p_product_id: editingId,
@@ -66,7 +67,6 @@ export const Products = () => {
         });
 
         if (error) throw error;
-
         if (data?.success) {
           showToast(data.message, 'success');
         } else {
@@ -74,14 +74,21 @@ export const Products = () => {
           return;
         }
       } else {
-        const { error } = await supabase.from('products').insert([
-          {
-            ...formData,
-            price_mru: parseFloat(formData.price_mru),
-          },
-        ]);
+        // إضافة المنتج عبر RPC (تجاوز خطأ 400 و 401)
+        const { data, error } = await supabase.rpc('add_product_v2', {
+          p_platform_id: formData.platform_id,
+          p_name: formData.name,
+          p_price_mru: parseFloat(formData.price_mru),
+          p_product_logo_url: formData.product_logo_url || null,
+        });
+
         if (error) throw error;
-        showToast('تمت إضافة المنتج', 'success');
+        if (data?.success) {
+          showToast('تمت إضافة المنتج بنجاح', 'success');
+        } else {
+          showToast(data?.message || 'فشلت الإضافة', 'error');
+          return;
+        }
       }
 
       setShowForm(false);
@@ -89,6 +96,7 @@ export const Products = () => {
       setFormData({ platform_id: '', name: '', price_mru: '', product_logo_url: '' });
       loadData();
     } catch (error: any) {
+      console.error('Submit error:', error);
       showToast(editingId ? 'فشل التحديث' : 'فشلت الإضافة', 'error');
     }
   };
@@ -102,6 +110,7 @@ export const Products = () => {
       product_logo_url: product.product_logo_url || '',
     });
     setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id: string) => {
@@ -119,7 +128,6 @@ export const Products = () => {
       });
 
       if (error) throw error;
-
       if (data?.success) {
         showToast(data.message, 'success');
         loadData();
@@ -144,21 +152,22 @@ export const Products = () => {
         <Button onClick={() => setShowForm(!showForm)}>
           <div className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
-            <span>إضافة منتج</span>
+            <span>{showForm ? 'إلغاء' : 'إضافة منتج'}</span>
           </div>
         </Button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-6 mb-6">
-          <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-6 mb-6 border border-gray-800">
+          <div className="space-y-4 text-right">
             <div>
-              <label className="block text-white text-sm mb-2 text-right">المنصة</label>
+              <label className="block text-white text-sm mb-2">المنصة</label>
               <select
                 value={formData.platform_id}
                 onChange={(e) => setFormData({ ...formData, platform_id: e.target.value })}
-                className="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-white"
+                className="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
                 required
+                dir="rtl"
               >
                 <option value="">اختر المنصة</option>
                 {platforms.map((platform) => (
@@ -173,6 +182,7 @@ export const Products = () => {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
+              placeholder="مثال: 660 UC"
             />
             <Input
               label="السعر (MRU)"
@@ -181,16 +191,19 @@ export const Products = () => {
               value={formData.price_mru}
               onChange={(e) => setFormData({ ...formData, price_mru: e.target.value })}
               required
+              placeholder="0.00"
             />
             <Input
               label="رابط شعار المنتج (اختياري)"
               type="url"
               value={formData.product_logo_url}
               onChange={(e) => setFormData({ ...formData, product_logo_url: e.target.value })}
-              placeholder="https://example.com/icon.png"
+              placeholder="https://..."
             />
-            <div className="flex gap-3">
-              <Button type="submit" className="flex-1">حفظ</Button>
+            <div className="flex gap-3 pt-4">
+              <Button type="submit" className="flex-1">
+                {editingId ? 'تحديث المنتج' : 'حفظ المنتج'}
+              </Button>
               <Button
                 type="button"
                 variant="secondary"
@@ -206,28 +219,24 @@ export const Products = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map((product) => (
-          <div key={product.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-            <h3 className="text-white text-xl font-bold mb-2 text-center">{product.name}</h3>
-            <p className="text-gray-400 text-center mb-2">{product.platform.name}</p>
+          <div key={product.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-blue-500 transition-all">
+            {product.product_logo_url && (
+              <img src={product.product_logo_url} alt="" className="w-12 h-12 mx-auto mb-2 object-contain" />
+            )}
+            <h3 className="text-white text-xl font-bold mb-1 text-center">{product.name}</h3>
+            <p className="text-blue-400 text-center text-sm mb-3">{product.platform?.name}</p>
             <p className="text-white text-2xl font-bold text-center mb-4">
-              {product.price_mru} MRU
+              {product.price_mru} <span className="text-xs text-gray-400">MRU</span>
             </p>
             <div className="flex gap-2">
-              <Button
-                onClick={() => handleEdit(product)}
-                className="flex-1"
-              >
-                <div className="flex items-center justify-center gap-2">
+              <Button onClick={() => handleEdit(product)} className="flex-1 py-1">
+                <div className="flex items-center justify-center gap-2 text-sm">
                   <Edit2 className="w-4 h-4" />
                   <span>تعديل</span>
                 </div>
               </Button>
-              <Button
-                onClick={() => handleDelete(product.id)}
-                variant="danger"
-                className="flex-1"
-              >
-                <div className="flex items-center justify-center gap-2">
+              <Button onClick={() => handleDelete(product.id)} variant="danger" className="flex-1 py-1">
+                <div className="flex items-center justify-center gap-2 text-sm">
                   <Trash2 className="w-4 h-4" />
                   <span>حذف</span>
                 </div>
