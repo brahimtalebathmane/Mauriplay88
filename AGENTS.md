@@ -40,3 +40,5 @@ When making changes to API calls or admin pages, always verify column names agai
 - The home page (`/`) requires authentication; unauthenticated users are redirected to `/login`.
 - The `package.json` uses npm (lockfile is `package-lock.json`).
 - No Docker, no devcontainer, no Makefile — the only local process is the Vite dev server.
+- The My Purchases page may show a brief "فشل تحميل المشتريات" (Failed to load purchases) error toast — this is a pre-existing Supabase RLS/query issue, not an environment problem.
+- The admin account used for testing has phone `30459388` and PIN `3690` (Mauritanian format with +222 prefix auto-applied by the UI).
