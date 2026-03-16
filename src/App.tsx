@@ -19,9 +19,19 @@ import AccountRecovery from './pages/AccountRecovery';
 import VerifyRecoveryOTP from './pages/VerifyRecoveryOTP';
 import ResetPin from './pages/ResetPin';
 
+// شاشة تحميل بسيطة تظهر أثناء استعادة الجلسة
+const LoadingScreen = () => (
+  <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+  </div>
+);
+
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isLoggedIn, user } = useStore();
+  const { isLoggedIn, user, isHydrated } = useStore();
   const location = useLocation();
+
+  // منع التوجيه العشوائي حتى تكتمل قراءة البيانات من localStorage
+  if (!isHydrated) return <LoadingScreen />;
 
   console.log('ProtectedRoute:', { isLoggedIn, user: user?.phone_number, path: location.pathname });
 
@@ -39,7 +49,9 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isLoggedIn, user } = useStore();
+  const { isLoggedIn, user, isHydrated } = useStore();
+
+  if (!isHydrated) return <LoadingScreen />;
 
   console.log('AdminRoute:', { isLoggedIn, user: user?.phone_number, role: user?.role });
 
@@ -62,14 +74,33 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isLoggedIn, user } = useStore();
+  const { isLoggedIn, user, isHydrated } = useStore();
+
+  if (!isHydrated) return <LoadingScreen />;
 
   console.log('PublicRoute:', { isLoggedIn, user: user?.phone_number, verified: user?.is_verified });
 
-  if (isLoggedIn && user?.is_verified) {
-    console.log('PublicRoute: User verified, redirecting to home');
-    return <Navigate to="/" replace />;
+  if (isLoggedIn && user) {
+    // إذا كان مسجل ومفعل يذهب للرئيسية
+    if (user.is_verified) {
+      console.log('PublicRoute: User verified, redirecting to home');
+      return <Navigate to="/" replace />;
+    }
+    // إذا كان مسجل وغير مفعل يذهب لصفحة الـ OTP
+    return <Navigate to="/verify-otp" replace />;
   }
+
+  return <>{children}</>;
+};
+
+// مكون حماية خاص لصفحة الـ OTP
+const OTPRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isLoggedIn, user, isHydrated } = useStore();
+
+  if (!isHydrated) return <LoadingScreen />;
+
+  if (!isLoggedIn || !user) return <Navigate to="/login" replace />;
+  if (user.is_verified) return <Navigate to="/" replace />;
 
   return <>{children}</>;
 };
@@ -95,7 +126,16 @@ function App() {
             </PublicRoute>
           }
         />
-        <Route path="/verify-otp" element={<VerifyOTP />} />
+        
+        <Route 
+          path="/verify-otp" 
+          element={
+            <OTPRoute>
+              <VerifyOTP />
+            </OTPRoute>
+          } 
+        />
+        
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/account-recovery" element={<AccountRecovery />} />
         <Route path="/verify-recovery" element={<VerifyRecoveryOTP />} />
