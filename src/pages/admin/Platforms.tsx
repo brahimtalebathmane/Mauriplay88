@@ -5,12 +5,12 @@ import { Input } from '../../components/Input';
 import { showToast } from '../../components/Toast';
 import { useStore } from '../../store/useStore';
 import type { Platform } from '../../types';
-import { Plus, Trash2, CreditCard as Edit2 } from 'lucide-react';
+import { Plus, Trash2, Edit2 } from 'lucide-react';
 
 export const Platforms = () => {
   const { user } = useStore();
   const [platforms, setPlatforms] = useState<Platform[]>([]);
-  const [_loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -26,6 +26,7 @@ export const Platforms = () => {
 
   const loadPlatforms = async () => {
     try {
+      setLoading(true);
       const { data, error } = await supabase
         .from('platforms')
         .select('*')
@@ -50,43 +51,32 @@ export const Platforms = () => {
     }
 
     try {
+      // تجهيز البيانات بشكل يضمن عدم إرسال نصوص فارغة للحقول الاختيارية
+      const platformData = {
+        name: formData.name,
+        logo_url: formData.logo_url,
+        website_url: formData.website_url.trim() || null,
+        tutorial_video_url: formData.tutorial_video_url.trim() || null,
+        is_deleted: false,
+      };
+
       if (editingId) {
-        // تحديث منصة موجودة عبر RPC
-        const { data, error } = await supabase.rpc('admin_update_platform', {
-          p_admin_phone: user.phone_number,
-          p_platform_id: editingId,
-          p_name: formData.name,
-          p_logo_url: formData.logo_url,
-          p_website_url: formData.website_url || null,
-          p_tutorial_video_url: formData.tutorial_video_url || null,
-        });
+        // التعديل المباشر في الجدول (يعمل بفضل سياسة RLS للأدمن)
+        const { error } = await supabase
+          .from('platforms')
+          .update(platformData)
+          .eq('id', editingId);
 
         if (error) throw error;
-
-        if (data?.success) {
-          showToast(data.message, 'success');
-        } else {
-          showToast(data?.message || 'فشل التحديث', 'error');
-          return;
-        }
+        showToast('تم تحديث المنصة بنجاح', 'success');
       } else {
-        // إضافة منصة جديدة عبر RPC (الحل النهائي لخطأ 401)
-        const { data, error } = await supabase.rpc('add_platform_v2', {
-          p_name: formData.name,
-          p_logo_url: formData.logo_url,
-          p_website_url: formData.website_url || null,
-          p_tutorial_url: formData.tutorial_video_url || null
-        });
+        // الإضافة المباشرة في الجدول
+        const { error } = await supabase
+          .from('platforms')
+          .insert([platformData]);
 
         if (error) throw error;
-
-        // الدالة ترجع كائن يحتوي على success
-        if (data && (data.success === true || data.success === 'true')) {
-          showToast('تمت إضافة المنصة بنجاح', 'success');
-        } else {
-          showToast(data?.message || data?.error || 'فشلت الإضافة - تحقق من الصلاحيات', 'error');
-          return;
-        }
+        showToast('تمت إضافة المنصة بنجاح', 'success');
       }
 
       // إعادة ضبط النموذج وتحديث القائمة
@@ -96,7 +86,7 @@ export const Platforms = () => {
       await loadPlatforms();
     } catch (error: any) {
       console.error('Submit error:', error);
-      showToast(editingId ? 'فشل التحديث' : 'فشلت الإضافة', 'error');
+      showToast(error.message || 'فشلت العملية - تحقق من الصلاحيات', 'error');
     }
   };
 
@@ -104,7 +94,7 @@ export const Platforms = () => {
     setEditingId(platform.id);
     setFormData({
       name: platform.name,
-      logo_url: platform.logo_url,
+      logo_url: platform.logo_url || '',
       website_url: platform.website_url || '',
       tutorial_video_url: platform.tutorial_video_url || '',
     });
@@ -113,27 +103,19 @@ export const Platforms = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!user?.phone_number) {
-      showToast('غير مصرح', 'error');
-      return;
-    }
-
-    if (!confirm('هل أنت متأكد من حذف هذه المنصة؟ سيتم حذف جميع المنتجات المرتبطة بها.')) return;
+    if (!confirm('هل أنت متأكد من حذف هذه المنصة؟ سيتم إخفاؤها من واجهة المستخدم.')) return;
 
     try {
-      const { data, error } = await supabase.rpc('admin_delete_platform', {
-        p_admin_phone: user.phone_number,
-        p_platform_id: id,
-      });
+      // تنفيذ حذف ناعم (Soft Delete) عبر تحديث حقل is_deleted
+      const { error } = await supabase
+        .from('platforms')
+        .update({ is_deleted: true })
+        .eq('id', id);
 
       if (error) throw error;
 
-      if (data?.success) {
-        showToast(data.message, 'success');
-        loadPlatforms();
-      } else {
-        showToast(data?.message || 'فشل الحذف', 'error');
-      }
+      showToast('تم حذف المنصة بنجاح', 'success');
+      await loadPlatforms();
     } catch (error: any) {
       showToast('فشل الحذف', 'error');
     }
@@ -146,10 +128,13 @@ export const Platforms = () => {
   };
 
   return (
-    <div>
+    <div className="p-4 md:p-0">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-white text-2xl font-bold">المنصات</h2>
-        <Button onClick={() => setShowForm(!showForm)}>
+        <Button onClick={() => {
+          if (showForm) handleCancelEdit();
+          else setShowForm(true);
+        }}>
           <div className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
             <span>{showForm ? 'إغلاق النموذج' : 'إضافة منصة'}</span>
@@ -158,7 +143,7 @@ export const Platforms = () => {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-6 mb-6 border border-gray-800">
+        <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-6 mb-6 border border-gray-800 shadow-xl">
           <div className="space-y-4">
             <Input
               label="اسم المنصة"
@@ -203,47 +188,51 @@ export const Platforms = () => {
         </form>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {platforms.map((platform) => (
-          <div key={platform.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-blue-500/50 transition-colors">
-            <div className="h-24 flex items-center justify-center mb-4 bg-black/20 rounded-lg p-2">
-              <img
-                src={platform.logo_url}
-                alt={platform.name}
-                className="max-w-full max-h-full object-contain"
-              />
+      {loading ? (
+        <div className="text-center py-12 text-gray-500 italic">جاري تحميل المنصات...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {platforms.map((platform) => (
+            <div key={platform.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-cyan-500/50 transition-all duration-300 shadow-sm hover:shadow-cyan-500/10">
+              <div className="h-24 flex items-center justify-center mb-4 bg-black/40 rounded-lg p-4">
+                <img
+                  src={platform.logo_url}
+                  alt={platform.name}
+                  className="max-w-full max-h-full object-contain drop-shadow-md"
+                />
+              </div>
+              <h3 className="text-white text-center font-bold mb-4 text-lg">{platform.name}</h3>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleEdit(platform)}
+                  variant="secondary"
+                  className="flex-1 py-2 bg-gray-800 hover:bg-gray-700 border-none"
+                >
+                  <div className="flex items-center justify-center gap-2 text-sm">
+                    <Edit2 className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>تعديل</span>
+                  </div>
+                </Button>
+                <Button
+                  onClick={() => handleDelete(platform.id)}
+                  variant="danger"
+                  className="flex-1 py-2"
+                >
+                  <div className="flex items-center justify-center gap-2 text-sm">
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>حذف</span>
+                  </div>
+                </Button>
+              </div>
             </div>
-            <h3 className="text-white text-center font-bold mb-4 text-lg">{platform.name}</h3>
-            <div className="flex gap-2">
-              <Button
-                onClick={() => handleEdit(platform)}
-                variant="secondary"
-                className="flex-1 py-2"
-              >
-                <div className="flex items-center justify-center gap-2 text-sm">
-                  <Edit2 className="w-3.5 h-3.5" />
-                  <span>تعديل</span>
-                </div>
-              </Button>
-              <Button
-                onClick={() => handleDelete(platform.id)}
-                variant="danger"
-                className="flex-1 py-2"
-              >
-                <div className="flex items-center justify-center gap-2 text-sm">
-                  <Trash2 className="w-3.5 h-3.5" />
-                  <span>حذف</span>
-                </div>
-              </Button>
+          ))}
+          {platforms.length === 0 && (
+            <div className="col-span-full text-center py-12 bg-gray-900/50 rounded-lg border border-dashed border-gray-800">
+              <p className="text-gray-500">لا توجد منصات مضافة حالياً</p>
             </div>
-          </div>
-        ))}
-        {platforms.length === 0 && (
-          <div className="col-span-full text-center py-12 bg-gray-900/50 rounded-lg border border-dashed border-gray-800">
-            <p className="text-gray-500">لا توجد منصات مضافة حالياً</p>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
