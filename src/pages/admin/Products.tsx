@@ -52,7 +52,7 @@ export const Products = () => {
     e.preventDefault();
 
     if (!user) {
-      showToast('غير مصرح', 'error');
+      showToast('غير مصرح - يرجى تسجيل الدخول', 'error');
       return;
     }
 
@@ -74,19 +74,21 @@ export const Products = () => {
           return;
         }
       } else {
-        // إضافة المنتج عبر RPC (تجاوز خطأ 400 و 401)
+        // إضافة المنتج عبر RPC (استخدام التعديل الجديد لمعالجة الشعار)
         const { data, error } = await supabase.rpc('add_product_v2', {
           p_platform_id: formData.platform_id,
           p_name: formData.name,
           p_price_mru: parseFloat(formData.price_mru),
-          p_product_logo_url: formData.product_logo_url || null,
+          // نرسل null إذا كان الحقل فارغاً لتتولى الدالة وضع الشعار الافتراضي
+          p_product_logo_url: formData.product_logo_url.trim() || null,
         });
 
         if (error) throw error;
+        
         if (data?.success) {
           showToast('تمت إضافة المنتج بنجاح', 'success');
         } else {
-          showToast(data?.message || 'فشلت الإضافة', 'error');
+          showToast(data?.message || 'فشلت الإضافة - تحقق من البيانات', 'error');
           return;
         }
       }
@@ -158,14 +160,14 @@ export const Products = () => {
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-6 mb-6 border border-gray-800">
+        <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-6 mb-6 border border-gray-800 shadow-xl">
           <div className="space-y-4 text-right">
             <div>
               <label className="block text-white text-sm mb-2">المنصة</label>
               <select
                 value={formData.platform_id}
                 onChange={(e) => setFormData({ ...formData, platform_id: e.target.value })}
-                className="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+                className="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
                 required
                 dir="rtl"
               >
@@ -198,7 +200,7 @@ export const Products = () => {
               type="url"
               value={formData.product_logo_url}
               onChange={(e) => setFormData({ ...formData, product_logo_url: e.target.value })}
-              placeholder="https://..."
+              placeholder="https://example.com/image.png"
             />
             <div className="flex gap-3 pt-4">
               <Button type="submit" className="flex-1">
@@ -219,31 +221,40 @@ export const Products = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map((product) => (
-          <div key={product.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-blue-500 transition-all">
-            {product.product_logo_url && (
-              <img src={product.product_logo_url} alt="" className="w-12 h-12 mx-auto mb-2 object-contain" />
-            )}
+          <div key={product.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-blue-500/50 transition-all duration-300">
+            <div className="h-16 flex items-center justify-center mb-3 bg-black/20 rounded">
+              <img 
+                src={product.product_logo_url || 'https://placehold.co/400x400?text=No+Logo'} 
+                alt="" 
+                className="max-h-full object-contain" 
+              />
+            </div>
             <h3 className="text-white text-xl font-bold mb-1 text-center">{product.name}</h3>
-            <p className="text-blue-400 text-center text-sm mb-3">{product.platform?.name}</p>
-            <p className="text-white text-2xl font-bold text-center mb-4">
-              {product.price_mru} <span className="text-xs text-gray-400">MRU</span>
+            <p className="text-blue-400 text-center text-sm mb-3 font-medium">{product.platform?.name}</p>
+            <p className="text-white text-2xl font-bold text-center mb-5 bg-blue-600/10 py-2 rounded-lg">
+              {product.price_mru} <span className="text-xs text-blue-400 font-normal">MRU</span>
             </p>
             <div className="flex gap-2">
-              <Button onClick={() => handleEdit(product)} className="flex-1 py-1">
-                <div className="flex items-center justify-center gap-2 text-sm">
-                  <Edit2 className="w-4 h-4" />
+              <Button onClick={() => handleEdit(product)} variant="secondary" className="flex-1 py-1 text-sm">
+                <div className="flex items-center justify-center gap-2">
+                  <Edit2 className="w-3.5 h-3.5" />
                   <span>تعديل</span>
                 </div>
               </Button>
-              <Button onClick={() => handleDelete(product.id)} variant="danger" className="flex-1 py-1">
-                <div className="flex items-center justify-center gap-2 text-sm">
-                  <Trash2 className="w-4 h-4" />
+              <Button onClick={() => handleDelete(product.id)} variant="danger" className="flex-1 py-1 text-sm">
+                <div className="flex items-center justify-center gap-2">
+                  <Trash2 className="w-3.5 h-3.5" />
                   <span>حذف</span>
                 </div>
               </Button>
             </div>
           </div>
         ))}
+        {products.length === 0 && (
+          <div className="col-span-full text-center py-20 text-gray-600 border border-dashed border-gray-800 rounded-lg">
+            لا توجد منتجات حالياً
+          </div>
+        )}
       </div>
     </div>
   );
