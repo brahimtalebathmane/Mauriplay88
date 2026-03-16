@@ -1,24 +1,30 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useStore } from './store/useStore';
 import { ToastContainer } from './components/Toast';
+
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { VerifyOTP } from './pages/VerifyOTP';
 import { Home } from './pages/Home';
+import { PlatformPage } from './pages/Platform';
+import { Purchase } from './pages/Purchase';
+import { OrderSuccess } from './pages/OrderSuccess';
+import { MyPurchases } from './pages/MyPurchases';
+import { Profile } from './pages/Profile';
+import { Wallet } from './pages/Wallet';
+import { WalletTopup } from './pages/WalletTopup';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { AdminDashboard } from './pages/admin/Dashboard';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn, user } = useStore();
-  
-  // إذا كان isLoggedIn صحيحًا ولكن بيانات المستخدم لم تصل بعد (حالة نادرة عند التحديث)
-  if (isLoggedIn && !user) return <div className="bg-black min-h-screen"></div>;
 
   if (!isLoggedIn || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  // استخدام الحقل الصحيح مع حماية ضد الـ undefined
-  const verified = user.is_verified === true;
-  if (!verified) {
+  // استخدام الحقل الصحيح (is_verified)
+  if (user.is_verified === false) {
     return <Navigate to="/verify-otp" replace />;
   }
 
@@ -27,13 +33,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn, user } = useStore();
-  const location = useLocation();
 
-  if (isLoggedIn && user) {
-    const verified = user.is_verified === true;
-    if (verified) return <Navigate to="/" replace />;
-    // إذا كان مسجلاً وغير مفعل، نمنعه من رؤية صفحة الدخول ونرسله لـ OTP فقط إذا لم يكن هناك
-    if (location.pathname !== '/verify-otp') return <Navigate to="/verify-otp" replace />;
+  // إذا كان مسجلاً ومفعلاً، يذهب للرئيسية فوراً
+  if (isLoggedIn && user?.is_verified === true) {
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
@@ -47,10 +50,19 @@ function App() {
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
-        
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+
         <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-        {/* أضف بقية المسارات هنا بنفس نمط ProtectedRoute */}
-        
+        <Route path="/platform/:id" element={<ProtectedRoute><PlatformPage /></ProtectedRoute>} />
+        <Route path="/purchase/:id" element={<ProtectedRoute><Purchase /></ProtectedRoute>} />
+        <Route path="/order-success/:id" element={<ProtectedRoute><OrderSuccess /></ProtectedRoute>} />
+        <Route path="/my-purchases" element={<ProtectedRoute><MyPurchases /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+        <Route path="/wallet-topup" element={<ProtectedRoute><WalletTopup /></ProtectedRoute>} />
+
+        <Route path="/admin/*" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
