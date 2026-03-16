@@ -45,13 +45,13 @@ export const Platforms = () => {
     e.preventDefault();
 
     if (!user) {
-      showToast('غير مصرح', 'error');
+      showToast('غير مصرح - الرجاء تسجيل الدخول', 'error');
       return;
     }
 
     try {
       if (editingId) {
-        // تحديث منصة موجودة
+        // تحديث منصة موجودة عبر RPC
         const { data, error } = await supabase.rpc('admin_update_platform', {
           p_admin_phone: user.phone_number,
           p_platform_id: editingId,
@@ -70,7 +70,7 @@ export const Platforms = () => {
           return;
         }
       } else {
-        // --- التعديل هنا: استخدام الدالة الجديدة لتجنب خطأ 401 ---
+        // إضافة منصة جديدة عبر RPC (الحل النهائي لخطأ 401)
         const { data, error } = await supabase.rpc('add_platform_v2', {
           p_name: formData.name,
           p_logo_url: formData.logo_url,
@@ -80,18 +80,20 @@ export const Platforms = () => {
 
         if (error) throw error;
 
-        if (data?.success) {
+        // الدالة ترجع كائن يحتوي على success
+        if (data && (data.success === true || data.success === 'true')) {
           showToast('تمت إضافة المنصة بنجاح', 'success');
         } else {
-          showToast(data?.message || 'فشلت الإضافة', 'error');
+          showToast(data?.message || data?.error || 'فشلت الإضافة - تحقق من الصلاحيات', 'error');
           return;
         }
       }
 
+      // إعادة ضبط النموذج وتحديث القائمة
       setShowForm(false);
       setEditingId(null);
       setFormData({ name: '', logo_url: '', website_url: '', tutorial_video_url: '' });
-      loadPlatforms();
+      await loadPlatforms();
     } catch (error: any) {
       console.error('Submit error:', error);
       showToast(editingId ? 'فشل التحديث' : 'فشلت الإضافة', 'error');
@@ -107,6 +109,7 @@ export const Platforms = () => {
       tutorial_video_url: platform.tutorial_video_url || '',
     });
     setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id: string) => {
@@ -149,38 +152,44 @@ export const Platforms = () => {
         <Button onClick={() => setShowForm(!showForm)}>
           <div className="flex items-center gap-2">
             <Plus className="w-4 h-4" />
-            <span>إضافة منصة</span>
+            <span>{showForm ? 'إغلاق النموذج' : 'إضافة منصة'}</span>
           </div>
         </Button>
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-6 mb-6">
+        <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-6 mb-6 border border-gray-800">
           <div className="space-y-4">
             <Input
               label="اسم المنصة"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
+              placeholder="مثال: PUBG Mobile"
             />
             <Input
               label="رابط الشعار"
               value={formData.logo_url}
               onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
               required
+              placeholder="https://example.com/logo.png"
             />
             <Input
-              label="رابط الموقع"
+              label="رابط الموقع (اختياري)"
               value={formData.website_url}
               onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+              placeholder="https://..."
             />
             <Input
-              label="رابط فيديو الشرح"
+              label="رابط فيديو الشرح (اختياري)"
               value={formData.tutorial_video_url}
               onChange={(e) => setFormData({ ...formData, tutorial_video_url: e.target.value })}
+              placeholder="https://youtube.com/..."
             />
-            <div className="flex gap-3">
-              <Button type="submit" className="flex-1">حفظ</Button>
+            <div className="flex gap-3 pt-2">
+              <Button type="submit" className="flex-1">
+                {editingId ? 'تحديث المنصة' : 'حفظ المنصة'}
+              </Button>
               <Button
                 type="button"
                 variant="secondary"
@@ -196,36 +205,44 @@ export const Platforms = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {platforms.map((platform) => (
-          <div key={platform.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800">
-            <img
-              src={platform.logo_url}
-              alt={platform.name}
-              className="w-20 h-20 object-contain mx-auto mb-4"
-            />
-            <h3 className="text-white text-center font-bold mb-2">{platform.name}</h3>
-            <div className="flex gap-2 mt-4">
+          <div key={platform.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-blue-500/50 transition-colors">
+            <div className="h-24 flex items-center justify-center mb-4 bg-black/20 rounded-lg p-2">
+              <img
+                src={platform.logo_url}
+                alt={platform.name}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+            <h3 className="text-white text-center font-bold mb-4 text-lg">{platform.name}</h3>
+            <div className="flex gap-2">
               <Button
                 onClick={() => handleEdit(platform)}
-                className="flex-1"
+                variant="secondary"
+                className="flex-1 py-2"
               >
-                <div className="flex items-center justify-center gap-2">
-                  <Edit2 className="w-4 h-4" />
+                <div className="flex items-center justify-center gap-2 text-sm">
+                  <Edit2 className="w-3.5 h-3.5" />
                   <span>تعديل</span>
                 </div>
               </Button>
               <Button
                 onClick={() => handleDelete(platform.id)}
                 variant="danger"
-                className="flex-1"
+                className="flex-1 py-2"
               >
-                <div className="flex items-center justify-center gap-2">
-                  <Trash2 className="w-4 h-4" />
+                <div className="flex items-center justify-center gap-2 text-sm">
+                  <Trash2 className="w-3.5 h-3.5" />
                   <span>حذف</span>
                 </div>
               </Button>
             </div>
           </div>
         ))}
+        {platforms.length === 0 && (
+          <div className="col-span-full text-center py-12 bg-gray-900/50 rounded-lg border border-dashed border-gray-800">
+            <p className="text-gray-500">لا توجد منصات مضافة حالياً</p>
+          </div>
+        )}
       </div>
     </div>
   );
