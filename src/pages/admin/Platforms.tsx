@@ -55,7 +55,6 @@ export const Platforms = () => {
     try {
       setSubmitting(true);
       
-      // تجهيز البيانات وتنظيف الروابط
       const platformData = {
         name: formData.name.trim(),
         logo_url: formData.logo_url.trim(),
@@ -83,13 +82,12 @@ export const Platforms = () => {
         showToast('تمت إضافة المنصة بنجاح', 'success');
       }
 
-      // إعادة ضبط النموذج وتحديث القائمة
       handleCancelEdit();
       await loadPlatforms();
     } catch (error: any) {
       console.error('Submit error:', error);
-      // عرض تفاصيل الخطأ إذا كان بسبب RLS (42501)
-      const msg = error.code === '42501' ? 'خطأ في الصلاحيات: تأكد أنك مسجل كأدمن' : error.message;
+      // معالجة خطأ الصلاحيات 42501 بشكل واضح
+      const msg = error.code === '42501' ? 'خطأ في الصلاحيات: تأكد أن حسابك يمتلك رتبة admin' : error.message;
       showToast(msg, 'error');
     } finally {
       setSubmitting(false);
@@ -112,7 +110,8 @@ export const Platforms = () => {
     if (!confirm('هل أنت متأكد من حذف هذه المنصة؟')) return;
 
     try {
-      // الحذف الناعم (Soft Delete)
+      setLoading(true);
+      // استخدام تحديث الحقل is_deleted كحذف ناعم
       const { error } = await supabase
         .from('platforms')
         .update({ is_deleted: true })
@@ -121,11 +120,13 @@ export const Platforms = () => {
       if (error) throw error;
 
       showToast('تم الحذف بنجاح', 'success');
-      // تحديث الحالة محلياً فوراً
+      // تحديث الحالة محلياً فوراً لضمان اختفاء العنصر حتى لو تأخرت القاعدة
       setPlatforms(prev => prev.filter(p => p.id !== id));
     } catch (error: any) {
       console.error('Delete Error:', error);
-      showToast('فشل الحذف - تحقق من الصلاحيات', 'error');
+      showToast('فشل الحذف - تحقق من صلاحيات الأدمن', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -207,10 +208,10 @@ export const Platforms = () => {
         </form>
       )}
 
-      {loading ? (
+      {loading && platforms.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-gray-500">
           <Loader2 className="w-10 h-10 animate-spin mb-4 text-cyan-500" />
-          <p className="italic">جاري تحميل المنصات من القاعدة...</p>
+          <p className="italic">جاري تحديث البيانات...</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
