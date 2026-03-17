@@ -6,11 +6,12 @@ import { supabase } from '../lib/supabase';
 import { useStore } from '../store/useStore';
 import { showToast } from '../components/Toast';
 import { formatPhoneForDisplay } from '../utils/phoneNumber';
+import { getUserVerificationStatus } from '../utils/auth';
 import { MessageSquare, RefreshCcw, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export const VerifyOTP = () => {
   const navigate = useNavigate();
-  const { setUser } = useStore();
+  const { user, isLoggedIn, setUser } = useStore();
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
@@ -18,13 +19,31 @@ export const VerifyOTP = () => {
   const [countdown, setCountdown] = useState(60);
 
   useEffect(() => {
-    const pendingPhone = localStorage.getItem('pending_phone');
-    if (!pendingPhone) {
-      navigate('/register');
+    if (isLoggedIn && user) {
+      if (user.role === 'admin' || getUserVerificationStatus(user)) {
+        navigate(user.role === 'admin' ? '/admin' : '/', { replace: true });
+        return;
+      }
+
+      const pendingPhone = localStorage.getItem('pending_phone');
+      if (pendingPhone) {
+        setPhone(pendingPhone);
+        return;
+      }
+
+      localStorage.setItem('pending_phone', user.phone_number);
+      setPhone(user.phone_number);
       return;
     }
-    setPhone(pendingPhone);
-  }, [navigate]);
+
+    const pendingPhone = localStorage.getItem('pending_phone');
+    if (pendingPhone) {
+      setPhone(pendingPhone);
+      return;
+    }
+
+    navigate('/login', { replace: true });
+  }, [isLoggedIn, navigate, user]);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -50,8 +69,8 @@ export const VerifyOTP = () => {
       } else {
         showToast(data?.message || 'فشل إرسال رمز التحقق', 'error');
       }
-    } catch (error: any) {
-      showToast('حدث خطأ أثناء إرسال رمز التحقق', 'error');
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : 'حدث خطأ أثناء إرسال رمز التحقق', 'error');
     } finally {
       setSendingCode(false);
     }
@@ -112,8 +131,8 @@ export const VerifyOTP = () => {
       } else {
         showToast(data.message || 'فشل التحقق', 'error');
       }
-    } catch (error: any) {
-      showToast(error.message || 'حدث خطأ أثناء التحقق', 'error');
+    } catch (error: unknown) {
+      showToast(error instanceof Error ? error.message : 'حدث خطأ أثناء التحقق', 'error');
     } finally {
       setLoading(false);
     }

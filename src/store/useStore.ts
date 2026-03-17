@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User } from '../types';
+import { normalizeUser } from '../utils/auth';
 
 interface StoreState {
   isLoggedIn: boolean;
@@ -17,25 +18,12 @@ export const useStore = create<StoreState>()(
       isLoggedIn: false,
       user: null,
       setUser: (user) => {
-        if (user) {
-          const verifiedStatus = (user as any).is_verified ?? (user as any).verified ?? false;
-          user.is_verified = verifiedStatus;
-          // Ensure role is set from API so admin panel recognizes admin correctly
-          if (typeof (user as any).role !== 'string') {
-            (user as any).role = 'user';
-          }
-        }
-        set({ user, isLoggedIn: !!user });
+        const normalizedUser = normalizeUser(user);
+        set({ user: normalizedUser, isLoggedIn: !!normalizedUser });
       },
       setSession: (user, isLoggedIn) => {
-        if (user) {
-          const verifiedStatus = (user as any).is_verified ?? (user as any).verified ?? false;
-          user.is_verified = verifiedStatus;
-          if (typeof (user as any).role !== 'string') {
-            (user as any).role = 'user';
-          }
-        }
-        set({ user, isLoggedIn });
+        const normalizedUser = normalizeUser(user);
+        set({ user: normalizedUser, isLoggedIn: isLoggedIn && !!normalizedUser });
       },
       logout: () => {
         localStorage.removeItem('pending_phone');
@@ -51,6 +39,17 @@ export const useStore = create<StoreState>()(
     {
       name: 'mauriplay-storage',
       storage: createJSONStorage(() => localStorage),
+      merge: (persistedState, currentState) => {
+        const state = (persistedState as Partial<StoreState> | undefined) || {};
+        const normalizedUser = normalizeUser(state.user);
+
+        return {
+          ...currentState,
+          ...state,
+          user: normalizedUser,
+          isLoggedIn: !!normalizedUser && state.isLoggedIn !== false,
+        };
+      },
     }
   )
 );

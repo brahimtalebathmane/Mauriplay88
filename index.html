@@ -57,8 +57,8 @@
 
           // Handle controller change (new SW activated)
           navigator.serviceWorker.addEventListener('controllerchange', () => {
-            console.log('[SW] New service worker activated, reloading');
-            window.location.reload();
+            // Avoid reloading mid-interaction; the user can refresh after the current flow.
+            console.log('[SW] New service worker activated');
           });
         });
       }

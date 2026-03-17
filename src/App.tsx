@@ -15,16 +15,17 @@ import { Wallet } from './pages/Wallet';
 import { WalletTopup } from './pages/WalletTopup';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { AdminDashboard } from './pages/admin/Dashboard';
+import { getUserVerificationStatus } from './utils/auth';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn, user } = useStore();
+  const isVerified = getUserVerificationStatus(user);
 
   if (!isLoggedIn || !user) {
     return <Navigate to="/login" replace />;
   }
 
-  // استخدام الحقل الصحيح (is_verified)
-  if (user.is_verified === false) {
+  if (user.role !== 'admin' && !isVerified) {
     return <Navigate to="/verify-otp" replace />;
   }
 
@@ -33,10 +34,18 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn, user } = useStore();
+  const isVerified = getUserVerificationStatus(user);
 
-  // إذا كان مسجلاً ومفعلاً، يذهب للرئيسية فوراً
-  if (isLoggedIn && user?.is_verified === true) {
+  if (isLoggedIn && user?.role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (isLoggedIn && isVerified) {
     return <Navigate to="/" replace />;
+  }
+
+  if (isLoggedIn && user) {
+    return <Navigate to="/verify-otp" replace />;
   }
 
   return <>{children}</>;
