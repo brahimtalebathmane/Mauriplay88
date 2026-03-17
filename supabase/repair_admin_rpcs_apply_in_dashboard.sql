@@ -2,10 +2,22 @@
   REPAIR: Admin Panel RPCs – run this in Supabase Dashboard → SQL Editor
   if Admin Panel shows "Failed to load orders/users/payment methods/shipping requests"
   or "Make sure to apply migrations (admin_get_inventory)".
+  Also fixes: column "logo_url" of relation "products" does not exist.
 
   This creates the required RPCs and grants EXECUTE to anon/authenticated.
   Run once, then refresh the Admin Panel.
 */
+
+-- ========== 0. FIX PRODUCTS.LOGO_URL (for admin add/edit product) ==========
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'products' AND column_name = 'logo_url'
+  ) THEN
+    ALTER TABLE products ADD COLUMN logo_url TEXT;
+  END IF;
+END $$;
 
 -- ========== 1. ORDERS ==========
 CREATE OR REPLACE FUNCTION get_admin_orders(
