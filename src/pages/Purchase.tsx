@@ -180,16 +180,24 @@ export const Purchase = () => {
   };
 
   const uploadReceipt = async (orderId: string) => {
-    if (!receipt) return;
+    if (!receipt || !user?.id) return;
     try {
       const fileExt = receipt.name.split('.').pop();
       const fileName = `${orderId}.${fileExt}`;
       const { error: uploadError } = await supabase.storage.from('receipts').upload(fileName, receipt);
       if (uploadError) throw uploadError;
       const { data: { publicUrl } } = supabase.storage.from('receipts').getPublicUrl(fileName);
-      await supabase.from('orders').update({ receipt_url: publicUrl }).eq('id', orderId);
+      const { data: rpcData, error: rpcError } = await supabase.rpc('update_order_receipt', {
+        p_user_id: user.id,
+        p_order_id: orderId,
+        p_receipt_url: publicUrl,
+      });
+      if (rpcError) throw rpcError;
+      if (rpcData && !(rpcData as { success?: boolean }).success) {
+        console.error('Receipt attach failed:', (rpcData as { message?: string }).message);
+      }
     } catch (error) {
-      console.error('Receipt upload failed');
+      console.error('Receipt upload failed', error);
     }
   };
 
@@ -317,6 +325,11 @@ export const Purchase = () => {
         ) : (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
             {/* قائمة الحسابات */}
+            {paymentMethods.length === 0 ? (
+              <div className="text-center text-red-400 py-4 rounded-2xl bg-red-500/10 border border-red-500/20">
+                لا توجد طرق دفع متاحة حالياً
+              </div>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {paymentMethods.map((method) => (
                 <button
@@ -357,6 +370,7 @@ export const Purchase = () => {
                 </button>
               ))}
             </div>
+            )}
 
             <div className="space-y-4">
               <Input
@@ -403,10 +417,16 @@ export const Purchase = () => {
               )}
             </div>
 
-            <Button 
-              onClick={handleManualPurchase} 
-              loading={purchasing} 
-              disabled={!receipt || !selectedMethod}
+            <Button
+              onClick={handleManualPurchase}
+              loading={purchasing}
+              disabled={
+                purchasing ||
+                !selectedMethod ||
+                !userName.trim() ||
+                !userPaymentNumber.trim() ||
+                !receipt
+              }
               className="w-full py-6 rounded-2xl text-xl font-black"
             >
               إرسال الطلب للمراجعة

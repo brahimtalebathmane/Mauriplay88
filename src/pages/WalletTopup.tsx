@@ -72,11 +72,14 @@ export const WalletTopup = () => {
 
       if (methods.length > 0) {
         setSelectedPaymentMethod(methods[0].id);
+      } else {
+        setSelectedPaymentMethod('');
       }
     } catch (error) {
       console.error('Failed to load payment methods:', error);
       showToast('فشل تحميل طرق الدفع', 'error');
       setPaymentMethods([]);
+      setSelectedPaymentMethod('');
     } finally {
       setLoadingPaymentMethods(false);
     }
@@ -427,7 +430,12 @@ export const WalletTopup = () => {
           <Button
             type="submit"
             className="w-full mt-6"
-            disabled={loading || pendingCount >= 5}
+            disabled={
+              loading ||
+              pendingCount >= 5 ||
+              !selectedPaymentMethod ||
+              paymentMethods.length === 0
+            }
           >
             {loading ? 'جاري الإرسال...' : 'إرسال طلب الشحن'}
           </Button>
