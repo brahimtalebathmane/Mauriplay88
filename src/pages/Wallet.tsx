@@ -19,7 +19,7 @@ interface WalletTransaction {
 
 export const Wallet = () => {
   const navigate = useNavigate();
-  const { user } = useStore();
+  const { user, updateWalletBalance } = useStore();
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,6 +34,34 @@ export const Wallet = () => {
       setLoading(false);
     }
   }, [user]);
+
+  // Subscribe to wallet balance changes so UI updates instantly after admin actions
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel(`wallet-balance-${user.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'users',
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newBalance = (payload.new as { wallet_balance?: number }).wallet_balance;
+          if (typeof newBalance === 'number') {
+            updateWalletBalance(newBalance);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, updateWalletBalance]);
 
   const loadTransactions = async () => {
     if (!user?.phone_number) {
