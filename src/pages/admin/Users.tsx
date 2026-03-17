@@ -69,7 +69,7 @@ export const Users = () => {
     }
   };
 
-  const toggleWalletActive = async (userId: string, currentStatus: boolean) => {
+  const toggleWalletActive = async (userId: string, _currentStatus: boolean) => {
     if (!currentUser?.phone_number) {
       showToast('غير مصرح', 'error');
       return;
@@ -93,7 +93,7 @@ export const Users = () => {
     }
   };
 
-  const toggleUserActive = async (userId: string, currentStatus: boolean) => {
+  const toggleUserActive = async (userId: string, _currentStatus: boolean) => {
     if (!currentUser?.phone_number) {
       showToast('غير مصرح', 'error');
       return;

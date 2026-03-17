@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Shield, ArrowRight, Phone } from 'lucide-react';
+import { Shield, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { Button } from '../components/Button';
 import { PhoneInput } from '../components/PhoneInput';
