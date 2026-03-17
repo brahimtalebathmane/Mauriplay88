@@ -1,230 +1,208 @@
-import React, { useEffect, useState } from 'react';
-import { supabase } from '../../utils/supabase/client';
-import { Plus, Edit2, Trash2, Globe, Search } from 'lucide-react';
-import { toast } from 'react-hot-toast';
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Header } from '../components/Header';
+import { supabase } from '../lib/supabase';
+import type { Platform, ProductWithStock } from '../types';
+import { showToast } from '../components/Toast';
+import { ArrowRight, Loader2 } from 'lucide-react';
 
-interface Platform {
-  id: string;
-  name: string;
-  logo_url: string;
-  status: 'active' | 'inactive';
-  created_at: string;
-}
-
-const Platforms = () => {
-  const [platforms, setPlatforms] = useState<Platform[]>([]);
+export const PlatformPage = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [platform, setPlatform] = useState<Platform | null>(null);
+  const [products, setProducts] = useState<ProductWithStock[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [editingPlatform, setEditingPlatform] = useState<Platform | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    logo_url: '',
-    status: 'active' as const
-  });
 
   useEffect(() => {
-    fetchPlatforms();
-  }, []);
+    if (id) {
+      loadPlatformAndProducts();
+    }
+  }, [id]);
 
-  const fetchPlatforms = async () => {
+  const loadPlatformAndProducts = async () => {
     try {
-      const { data, error } = await supabase
+      setLoading(true);
+
+      // 1. جلب بيانات المنصة
+      const { data: platformData, error: platformError } = await supabase
         .from('platforms')
         .select('*')
-        .order('name');
-      
-      if (error) throw error;
-      setPlatforms(data || []);
+        .eq('id', id)
+        .single();
+
+      if (platformError) throw platformError;
+      setPlatform(platformData);
+
+      // 2. جلب المنتجات مع حساب المخزون المتوفر لكل منتج
+      // سنستخدم استعلاماً ذكياً يجلب المنتج وعدد الأكواد المتاحة له (available)
+      const { data: productsData, error: productsError } = await supabase
+        .from('products')
+        .select(`
+          *,
+          inventory(count)
+        `)
+        .eq('platform_id', id)
+        .eq('is_deleted', false)
+        .eq('inventory.status', 'available') // نعد فقط الأكواد المتاحة
+        .eq('inventory.is_deleted', false);
+
+      if (productsError) throw productsError;
+
+      // تحويل البيانات لتناسب الواجهة (ProductWithStock)
+      const formattedProducts = (productsData || []).map((product: any) => ({
+        ...product,
+        stock_count: product.inventory?.[0]?.count || 0
+      }));
+
+      setProducts(formattedProducts);
     } catch (error: any) {
-      toast.error('Error fetching platforms');
+      console.error('Platform Load Error:', error);
+      showToast('فشل تحميل بيانات المتجر', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingPlatform) {
-        const { error } = await supabase
-          .from('platforms')
-          .update(formData)
-          .eq('id', editingPlatform.id);
-        if (error) throw error;
-        toast.success('Platform updated');
-      } else {
-        const { error } = await supabase
-          .from('platforms')
-          .insert([formData]);
-        if (error) throw error;
-        toast.success('Platform added');
-      }
-      setIsModalOpen(false);
-      setEditingPlatform(null);
-      setFormData({ name: '', logo_url: '', status: 'active' });
-      fetchPlatforms();
-    } catch (error: any) {
-      toast.error(error.message);
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure?')) return;
-    try {
-      const { error } = await supabase
-        .from('platforms')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
-      toast.success('Platform deleted');
-      fetchPlatforms();
-    } catch (error: any) {
-      toast.error(error.message);
-    }
-  };
-
-  const filteredPlatforms = platforms.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  if (!platform && !loading) {
+    return (
+      <div className="min-h-screen bg-[#050505]">
+        <Header />
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <div className="text-gray-400 text-xl font-medium animate-pulse">المنصة غير موجودة</div>
+          <button onClick={() => navigate('/')} className="text-cyan-500 hover:underline">العودة للرئيسية</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Platforms Management</h1>
+    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-cyan-500/30">
+      <Header />
+
+      {/* Back button */}
+      <div className="max-w-7xl mx-auto px-4 pt-24">
         <button
-          onClick={() => {
-            setEditingPlatform(null);
-            setFormData({ name: '', logo_url: '', status: 'active' });
-            setIsModalOpen(true);
-          }}
-          className="bg-indigo-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-indigo-700"
+          onClick={() => navigate('/')}
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 group"
         >
-          <Plus size={20} /> Add Platform
+          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          <span>العودة للرئيسية</span>
         </button>
       </div>
 
-      <div className="mb-6 relative">
-        <Search className="absolute left-3 top-1/2 -transform -translate-y-1/2 text-gray-400" size={20} />
-        <input
-          type="text"
-          placeholder="Search platforms..."
-          className="w-full pl-10 pr-4 py-2 border rounded-lg"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
+      {/* Hero Section */}
+      <div className="relative w-full pb-10 overflow-hidden">
+        {platform && (
+          <>
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[500px] bg-gradient-to-b from-cyan-900/10 via-transparent to-transparent blur-[120px] rounded-full pointer-events-none" />
+            
+            <div className="relative z-10 max-w-7xl mx-auto px-4 flex flex-col items-center">
+              <div className="relative group mb-8">
+                <div className="absolute -inset-4 bg-cyan-500/10 rounded-full blur-3xl group-hover:bg-cyan-500/20 transition duration-1000"></div>
+                <div className="relative w-40 h-40 md:w-48 md:h-48 flex items-center justify-center">
+                  <img 
+                    src={platform.logo_url} 
+                    alt={platform.name} 
+                    className="w-full h-full object-contain drop-shadow-[0_0_30px_rgba(6,182,212,0.3)] transform group-hover:scale-105 transition duration-500" 
+                    onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/200?text=No+Logo'; }}
+                  />
+                </div>
+              </div>
 
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPlatforms.map((platform) => (
-            <div key={platform.id} className="bg-white p-6 rounded-xl shadow-sm border">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  {platform.logo_url ? (
-                    <img src={platform.logo_url} alt={platform.name} className="w-12 h-12 rounded-lg object-cover" />
-                  ) : (
-                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                      <Globe className="text-gray-400" />
-                    </div>
-                  )}
-                  <div>
-                    <h3 className="font-semibold">{platform.name}</h3>
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      platform.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
-                      {platform.status}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      setEditingPlatform(platform);
-                      setFormData({
-                        name: platform.name,
-                        logo_url: platform.logo_url,
-                        status: platform.status
-                      });
-                      setIsModalOpen(true);
-                    }}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
-                  >
-                    <Edit2 size={18} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(platform.id)}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
+              <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white text-center mb-4 uppercase">
+                {platform.name}
+              </h1>
+              
+              <div className="flex items-center gap-4 opacity-70">
+                <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-cyan-500" />
+                <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-[0.5em]">Premium Selection</span>
+                <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-cyan-500" />
               </div>
             </div>
-          ))}
-        </div>
-      )}
+          </>
+        )}
+      </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">
-              {editingPlatform ? 'Edit Platform' : 'Add New Platform'}
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Name</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full p-2 border rounded-lg"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Logo URL</label>
-                <input
-                  type="url"
-                  className="w-full p-2 border rounded-lg"
-                  value={formData.logo_url}
-                  onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Status</label>
-                <select
-                  className="w-full p-2 border rounded-lg"
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
-                >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-              <div className="flex gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-2 border rounded-lg hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                >
-                  {editingPlatform ? 'Update' : 'Add'}
-                </button>
-              </div>
-            </form>
+      {/* قسم المنتجات */}
+      <div className="max-w-4xl mx-auto px-4 pb-24 relative z-20">
+        <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
+          <h2 className="text-lg font-bold flex items-center gap-3">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+            </span>
+            العروض المتوفرة
+          </h2>
+          <div className="bg-white/5 px-3 py-1 rounded-md text-[9px] font-bold text-gray-500 uppercase tracking-widest">
+             {products.length} Products
           </div>
         </div>
-      )}
+
+        <div className="grid grid-cols-1 gap-4">
+          {loading ? (
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="h-24 bg-white/5 rounded-2xl animate-pulse border border-white/5" />
+              ))}
+            </div>
+          ) : products.length > 0 ? (
+            products.map((product) => (
+              <button
+                key={product.id}
+                onClick={() => product.stock_count > 0 && navigate(`/purchase/${product.id}`)}
+                disabled={product.stock_count === 0}
+                className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 ${
+                  product.stock_count > 0
+                    ? 'bg-[#0a0a0a] border-white/5 hover:border-cyan-500/30 hover:bg-[#0f0f0f] active:scale-[0.98]'
+                    : 'bg-black/40 border-red-900/5 opacity-50 cursor-not-allowed'
+                }`}
+              >
+                <div className="relative p-5 flex items-center justify-between gap-4">
+                  
+                  {/* السعر */}
+                  <div className="flex-shrink-0 text-left">
+                    <div className="text-2xl font-black text-white group-hover:text-cyan-400 transition-colors">
+                      {product.price_mru}
+                    </div>
+                    <div className="text-[9px] font-bold text-gray-500 uppercase tracking-tight">
+                      MRU
+                    </div>
+                  </div>
+
+                  {/* معلومات المنتج */}
+                  <div className="flex-1 text-center">
+                    <div className="text-lg font-bold text-gray-200 group-hover:text-white transition-colors mb-1">
+                      {product.name}
+                    </div>
+                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold ${
+                      product.stock_count > 0 
+                      ? 'bg-green-500/10 text-green-500 border border-green-500/20' 
+                      : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                    }`}>
+                      {product.stock_count > 0 ? `متوفر: ${product.stock_count}` : 'نفذت الكمية'}
+                    </div>
+                  </div>
+
+                  {/* أيقونة المنتج أو الحرف الأول */}
+                  <div className="flex-shrink-0">
+                    <div className="w-14 h-14 bg-gray-900 rounded-xl border border-white/5 flex items-center justify-center overflow-hidden">
+                      {product.product_logo_url ? (
+                        <img src={product.product_logo_url} alt="" className="w-full h-full object-contain p-2" />
+                      ) : (
+                        <span className="text-xl font-black text-gray-700">{product.name.charAt(0)}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </button>
+            ))
+          ) : (
+            <div className="text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
+              <p className="text-gray-500">لا توجد منتجات متاحة حالياً لهذه المنصة.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
-
-export default Platforms;
