@@ -18,9 +18,12 @@ export const useStore = create<StoreState>()(
       user: null,
       setUser: (user) => {
         if (user) {
-          // إصلاح جوهري: التأكد من قراءة حالة التفعيل حتى لو جاءت بأسماء مختلفة من الـ RPC
           const verifiedStatus = (user as any).is_verified ?? (user as any).verified ?? false;
           user.is_verified = verifiedStatus;
+          // Ensure role is set from API so admin panel recognizes admin correctly
+          if (typeof (user as any).role !== 'string') {
+            (user as any).role = 'user';
+          }
         }
         set({ user, isLoggedIn: !!user });
       },
@@ -28,6 +31,9 @@ export const useStore = create<StoreState>()(
         if (user) {
           const verifiedStatus = (user as any).is_verified ?? (user as any).verified ?? false;
           user.is_verified = verifiedStatus;
+          if (typeof (user as any).role !== 'string') {
+            (user as any).role = 'user';
+          }
         }
         set({ user, isLoggedIn });
       },

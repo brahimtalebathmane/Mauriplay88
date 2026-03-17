@@ -54,13 +54,14 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') {
+  // CRITICAL: Never intercept Supabase - pass through all methods (GET, POST, etc.)
+  // to avoid "FetchEvent resulted in a network error response"
+  if (url.hostname.includes('supabase') || request.url.includes('supabase')) {
     return;
   }
 
-  // Skip Supabase API calls
-  if (url.origin.includes('supabase')) {
+  // Skip non-GET requests for everything else
+  if (request.method !== 'GET') {
     return;
   }
 

@@ -30,11 +30,21 @@ export const Platforms = () => {
       setLoading(true);
       const { data, error } = await supabase.rpc('get_platforms');
 
-      if (error) throw error;
+      if (error) {
+        // Fallback: direct select if RPC not deployed or fails (e.g. after RLS fix)
+        const fallback = await supabase
+          .from('platforms')
+          .select('*')
+          .eq('is_deleted', false)
+          .order('name');
+        if (fallback.error) throw fallback.error;
+        setPlatforms((fallback.data as Platform[]) || []);
+        return;
+      }
       setPlatforms((data as Platform[]) || []);
     } catch (error: any) {
       console.error('Load Error:', error);
-      showToast('فشل تحميل المنصات', 'error');
+      showToast(error?.message || 'فشل تحميل المنصات', 'error');
     } finally {
       setLoading(false);
     }
@@ -47,8 +57,9 @@ export const Platforms = () => {
       showToast('غير مصرح - الرجاء تسجيل الدخول', 'error');
       return;
     }
-    if (user.role !== 'admin') {
-      showToast('غير مصرح - صلاحيات الأدمن مطلوبة', 'error');
+    const role = (user as { role?: string }).role;
+    if (role !== 'admin') {
+      showToast(role === undefined ? 'انتهت الجلسة أو لم يتم تحميل الصلاحيات - يرجى تسجيل الدخول مرة أخرى' : 'غير مصرح - صلاحيات الأدمن مطلوبة', 'error');
       return;
     }
 
@@ -116,8 +127,9 @@ export const Platforms = () => {
       showToast('غير مصرح - الرجاء تسجيل الدخول', 'error');
       return;
     }
-    if (user.role !== 'admin') {
-      showToast('غير مصرح - صلاحيات الأدمن مطلوبة', 'error');
+    const role = (user as { role?: string }).role;
+    if (role !== 'admin') {
+      showToast(role === undefined ? 'انتهت الجلسة - يرجى تسجيل الدخول مرة أخرى' : 'غير مصرح - صلاحيات الأدمن مطلوبة', 'error');
       return;
     }
     if (!confirm('هل أنت متأكد من حذف هذه المنصة؟')) return;
