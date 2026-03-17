@@ -1,208 +1,301 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Header } from '../components/Header';
-import { supabase } from '../lib/supabase';
-import type { Platform, ProductWithStock } from '../types';
-import { showToast } from '../components/Toast';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
+import { Button } from '../../components/Button';
+import { Input } from '../../components/Input';
+import { showToast } from '../../components/Toast';
+import { useStore } from '../../store/useStore';
+import type { Platform } from '../../types';
+import { Plus, Trash2, Edit2, Loader2 } from 'lucide-react';
 
-export const PlatformPage = () => {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [platform, setPlatform] = useState<Platform | null>(null);
-  const [products, setProducts] = useState<ProductWithStock[]>([]);
+export const Platforms = () => {
+  const { user } = useStore();
+  const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    logo_url: '',
+    website_url: '',
+    tutorial_video_url: '',
+  });
 
   useEffect(() => {
-    if (id) {
-      loadPlatformAndProducts();
-    }
-  }, [id]);
+    loadPlatforms();
+  }, []);
 
-  const loadPlatformAndProducts = async () => {
+  const loadPlatforms = async () => {
     try {
       setLoading(true);
+      const { data, error } = await supabase.rpc('get_platforms');
 
-      // 1. جلب بيانات المنصة
-      const { data: platformData, error: platformError } = await supabase
-        .from('platforms')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (platformError) throw platformError;
-      setPlatform(platformData);
-
-      // 2. جلب المنتجات مع حساب المخزون المتوفر لكل منتج
-      // سنستخدم استعلاماً ذكياً يجلب المنتج وعدد الأكواد المتاحة له (available)
-      const { data: productsData, error: productsError } = await supabase
-        .from('products')
-        .select(`
-          *,
-          inventory(count)
-        `)
-        .eq('platform_id', id)
-        .eq('is_deleted', false)
-        .eq('inventory.status', 'available') // نعد فقط الأكواد المتاحة
-        .eq('inventory.is_deleted', false);
-
-      if (productsError) throw productsError;
-
-      // تحويل البيانات لتناسب الواجهة (ProductWithStock)
-      const formattedProducts = (productsData || []).map((product: any) => ({
-        ...product,
-        stock_count: product.inventory?.[0]?.count || 0
-      }));
-
-      setProducts(formattedProducts);
+      if (error) {
+        const fallback = await supabase
+          .from('platforms')
+          .select('*')
+          .eq('is_deleted', false)
+          .order('name');
+        if (fallback.error) throw fallback.error;
+        setPlatforms((fallback.data as Platform[]) || []);
+        return;
+      }
+      setPlatforms((data as Platform[]) || []);
     } catch (error: any) {
-      console.error('Platform Load Error:', error);
-      showToast('فشل تحميل بيانات المتجر', 'error');
+      console.error('Load Error:', error);
+      showToast(error?.message || 'فشل تحميل المنصات', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  if (!platform && !loading) {
-    return (
-      <div className="min-h-screen bg-[#050505]">
-        <Header />
-        <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <div className="text-gray-400 text-xl font-medium animate-pulse">المنصة غير موجودة</div>
-          <button onClick={() => navigate('/')} className="text-cyan-500 hover:underline">العودة للرئيسية</button>
-        </div>
-      </div>
-    );
-  }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!user) {
+      showToast('غير مصرح - الرجاء تسجيل الدخول', 'error');
+      return;
+    }
+    const role = (user as { role?: string }).role;
+    if (role !== 'admin') {
+      showToast(role === undefined ? 'انتهت الجلسة أو لم يتم تحميل الصلاحيات - يرجى تسجيل الدخول مرة أخرى' : 'غير مصرح - صلاحيات الأدمن مطلوبة', 'error');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      if (editingId) {
+        const { data, error } = await supabase.rpc('admin_update_platform', {
+          p_admin_phone: user.phone_number,
+          p_platform_id: editingId,
+          p_name: formData.name.trim(),
+          p_logo_url: formData.logo_url.trim(),
+          p_website_url: formData.website_url.trim() || null,
+          p_tutorial_video_url: formData.tutorial_video_url.trim() || null,
+        });
+        if (error) throw error;
+        const result = data as { success?: boolean; message?: string };
+        if (result.success === false) {
+          showToast(result.message || 'Operation failed. Check permissions.', 'error');
+          return;
+        }
+        showToast('تم تحديث المنصة بنجاح', 'success');
+      } else {
+        const { data, error } = await supabase.rpc('admin_insert_platform', {
+          p_admin_phone: user.phone_number,
+          p_name: formData.name.trim(),
+          p_logo_url: formData.logo_url.trim(),
+          p_website_url: formData.website_url.trim() || null,
+          p_tutorial_video_url: formData.tutorial_video_url.trim() || null,
+        });
+        if (error) throw error;
+        const result = data as { success?: boolean; message?: string };
+        if (result.success === false) {
+          showToast(result.message || 'Operation failed. Check permissions.', 'error');
+          return;
+        }
+        showToast('تمت إضافة المنصة بنجاح', 'success');
+      }
+
+      handleCancelEdit();
+      await loadPlatforms();
+    } catch (error: any) {
+      console.error('Submit error:', error);
+      const raw = error?.message || '';
+      const msg =
+        error?.code === '42501'
+          ? 'خطأ في الصلاحيات: تأكد أن حسابك يمتلك رتبة admin'
+          : /schema cache|could not find the function/i.test(raw)
+            ? 'الخادم لم يحدّث بعد. تأكد من تطبيق migrations (admin_update_platform).'
+            : raw || 'Operation failed. Check permissions or try again.';
+      showToast(msg, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleEdit = (platform: Platform) => {
+    setEditingId(platform.id);
+    setFormData({
+      name: platform.name,
+      logo_url: platform.logo_url || '',
+      website_url: platform.website_url || '',
+      tutorial_video_url: platform.tutorial_video_url || '',
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!user) {
+      showToast('غير مصرح - الرجاء تسجيل الدخول', 'error');
+      return;
+    }
+    const role = (user as { role?: string }).role;
+    if (role !== 'admin') {
+      showToast(role === undefined ? 'انتهت الجلسة - يرجى تسجيل الدخول مرة أخرى' : 'غير مصرح - صلاحيات الأدمن مطلوبة', 'error');
+      return;
+    }
+    if (!confirm('هل أنت متأكد من حذف هذه المنصة؟')) return;
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase.rpc('admin_delete_platform', {
+        p_admin_phone: user.phone_number,
+        p_platform_id: id,
+      });
+      if (error) throw error;
+      const result = data as { success?: boolean; message?: string };
+      if (result.success === false) {
+        showToast(result.message || 'Operation failed. Check permissions.', 'error');
+        return;
+      }
+      showToast('تم الحذف بنجاح', 'success');
+      await loadPlatforms();
+    } catch (error: any) {
+      console.error('Delete Error:', error);
+      const raw = error?.message || '';
+      const msg = /schema cache|could not find the function/i.test(raw)
+        ? 'الخادم لم يحدّث بعد. تأكد من تطبيق migrations (admin_delete_platform).'
+        : raw || 'Operation failed. Check permissions or try again.';
+      showToast(msg, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setFormData({ name: '', logo_url: '', website_url: '', tutorial_video_url: '' });
+  };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-cyan-500/30">
-      <Header />
-
-      {/* Back button */}
-      <div className="max-w-7xl mx-auto px-4 pt-24">
-        <button
-          onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 group"
+    <div className="p-4 md:p-0">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-white text-2xl font-bold">إدارة المنصات</h2>
+        <Button
+          disabled={submitting}
+          onClick={() => {
+            if (showForm) handleCancelEdit();
+            else setShowForm(true);
+          }}
         >
-          <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          <span>العودة للرئيسية</span>
-        </button>
-      </div>
-
-      {/* Hero Section */}
-      <div className="relative w-full pb-10 overflow-hidden">
-        {platform && (
-          <>
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[500px] bg-gradient-to-b from-cyan-900/10 via-transparent to-transparent blur-[120px] rounded-full pointer-events-none" />
-            
-            <div className="relative z-10 max-w-7xl mx-auto px-4 flex flex-col items-center">
-              <div className="relative group mb-8">
-                <div className="absolute -inset-4 bg-cyan-500/10 rounded-full blur-3xl group-hover:bg-cyan-500/20 transition duration-1000"></div>
-                <div className="relative w-40 h-40 md:w-48 md:h-48 flex items-center justify-center">
-                  <img 
-                    src={platform.logo_url} 
-                    alt={platform.name} 
-                    className="w-full h-full object-contain drop-shadow-[0_0_30px_rgba(6,182,212,0.3)] transform group-hover:scale-105 transition duration-500" 
-                    onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/200?text=No+Logo'; }}
-                  />
-                </div>
-              </div>
-
-              <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white text-center mb-4 uppercase">
-                {platform.name}
-              </h1>
-              
-              <div className="flex items-center gap-4 opacity-70">
-                <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-cyan-500" />
-                <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-[0.5em]">Premium Selection</span>
-                <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-cyan-500" />
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* قسم المنتجات */}
-      <div className="max-w-4xl mx-auto px-4 pb-24 relative z-20">
-        <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
-          <h2 className="text-lg font-bold flex items-center gap-3">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
-            </span>
-            العروض المتوفرة
-          </h2>
-          <div className="bg-white/5 px-3 py-1 rounded-md text-[9px] font-bold text-gray-500 uppercase tracking-widest">
-             {products.length} Products
+          <div className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            <span>{showForm ? 'إغلاق النموذج' : 'إضافة منصة جديدة'}</span>
           </div>
-        </div>
+        </Button>
+      </div>
 
-        <div className="grid grid-cols-1 gap-4">
-          {loading ? (
-            <div className="space-y-4">
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-24 bg-white/5 rounded-2xl animate-pulse border border-white/5" />
-              ))}
-            </div>
-          ) : products.length > 0 ? (
-            products.map((product) => (
-              <button
-                key={product.id}
-                onClick={() => product.stock_count > 0 && navigate(`/purchase/${product.id}`)}
-                disabled={product.stock_count === 0}
-                className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 ${
-                  product.stock_count > 0
-                    ? 'bg-[#0a0a0a] border-white/5 hover:border-cyan-500/30 hover:bg-[#0f0f0f] active:scale-[0.98]'
-                    : 'bg-black/40 border-red-900/5 opacity-50 cursor-not-allowed'
-                }`}
-              >
-                <div className="relative p-5 flex items-center justify-between gap-4">
-                  
-                  {/* السعر */}
-                  <div className="flex-shrink-0 text-left">
-                    <div className="text-2xl font-black text-white group-hover:text-cyan-400 transition-colors">
-                      {product.price_mru}
-                    </div>
-                    <div className="text-[9px] font-bold text-gray-500 uppercase tracking-tight">
-                      MRU
-                    </div>
-                  </div>
-
-                  {/* معلومات المنتج */}
-                  <div className="flex-1 text-center">
-                    <div className="text-lg font-bold text-gray-200 group-hover:text-white transition-colors mb-1">
-                      {product.name}
-                    </div>
-                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold ${
-                      product.stock_count > 0 
-                      ? 'bg-green-500/10 text-green-500 border border-green-500/20' 
-                      : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                    }`}>
-                      {product.stock_count > 0 ? `متوفر: ${product.stock_count}` : 'نفذت الكمية'}
-                    </div>
-                  </div>
-
-                  {/* أيقونة المنتج أو الحرف الأول */}
-                  <div className="flex-shrink-0">
-                    <div className="w-14 h-14 bg-gray-900 rounded-xl border border-white/5 flex items-center justify-center overflow-hidden">
-                      {product.product_logo_url ? (
-                        <img src={product.product_logo_url} alt="" className="w-full h-full object-contain p-2" />
-                      ) : (
-                        <span className="text-xl font-black text-gray-700">{product.name.charAt(0)}</span>
-                      )}
-                    </div>
-                  </div>
+      {showForm && (
+        <form onSubmit={handleSubmit} className="bg-gray-900 rounded-lg p-6 mb-6 border border-gray-800 shadow-xl animate-in fade-in slide-in-from-top-4">
+          <div className="space-y-4">
+            <Input
+              label="اسم المنصة"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+              placeholder="مثال: PUBG Mobile"
+              disabled={submitting}
+            />
+            <Input
+              label="رابط الشعار (Image URL)"
+              value={formData.logo_url}
+              onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+              required
+              placeholder="https://example.com/logo.png"
+              disabled={submitting}
+            />
+            <Input
+              label="رابط الموقع (اختياري)"
+              value={formData.website_url}
+              onChange={(e) => setFormData({ ...formData, website_url: e.target.value })}
+              placeholder="https://..."
+              disabled={submitting}
+            />
+            <Input
+              label="رابط فيديو الشرح (اختياري)"
+              value={formData.tutorial_video_url}
+              onChange={(e) => setFormData({ ...formData, tutorial_video_url: e.target.value })}
+              placeholder="https://youtube.com/..."
+              disabled={submitting}
+            />
+            <div className="flex gap-3 pt-2">
+              <Button type="submit" className="flex-1" disabled={submitting}>
+                <div className="flex items-center justify-center gap-2">
+                  {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  {editingId ? 'تحديث المنصة' : 'حفظ المنصة'}
                 </div>
-              </button>
-            ))
-          ) : (
-            <div className="text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
-              <p className="text-gray-500">لا توجد منتجات متاحة حالياً لهذه المنصة.</p>
+              </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleCancelEdit}
+                className="flex-1"
+                disabled={submitting}
+              >
+                إلغاء
+              </Button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {loading && platforms.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+          <Loader2 className="w-10 h-10 animate-spin mb-4 text-cyan-500" />
+          <p className="italic">جاري تحديث البيانات...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {platforms.map((platform) => (
+            <div key={platform.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-cyan-500/50 transition-all duration-300 shadow-sm">
+              <div className="h-24 flex items-center justify-center mb-4 bg-black/40 rounded-lg p-4">
+                <img
+                  src={platform.logo_url}
+                  alt={platform.name}
+                  className="max-w-full max-h-full object-contain drop-shadow-md"
+                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=No+Image'; }}
+                />
+              </div>
+              <h3 className="text-white text-center font-bold mb-4 text-lg">{platform.name}</h3>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleEdit(platform)}
+                  variant="secondary"
+                  className="flex-1 py-2 bg-gray-800 hover:bg-gray-700 border-none"
+                  disabled={submitting}
+                >
+                  <div className="flex items-center justify-center gap-2 text-sm">
+                    <Edit2 className="w-3.5 h-3.5 text-cyan-400" />
+                    <span>تعديل</span>
+                  </div>
+                </Button>
+                <Button
+                  onClick={() => handleDelete(platform.id)}
+                  variant="danger"
+                  className="flex-1 py-2"
+                  disabled={submitting}
+                >
+                  <div className="flex items-center justify-center gap-2 text-sm">
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>حذف</span>
+                  </div>
+                </Button>
+              </div>
+            </div>
+          ))}
+
+          {platforms.length === 0 && !loading && (
+            <div className="col-span-full text-center py-20 bg-gray-900/50 rounded-lg border border-dashed border-gray-800">
+              <p className="text-gray-500 mb-2">لا توجد منصات متاحة حالياً</p>
+              <p className="text-sm text-gray-600">اضغط على "إضافة منصة جديدة" للبدء</p>
             </div>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 };
