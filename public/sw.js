@@ -1,6 +1,6 @@
-const CACHE_NAME = 'mauriplay-v5.0';
-const STATIC_CACHE = 'mauriplay-static-v5.0';
-const RUNTIME_CACHE = 'mauriplay-runtime-v5.0';
+const CACHE_NAME = 'mauriplay-v6.0';
+const STATIC_CACHE = 'mauriplay-static-v6.0';
+const RUNTIME_CACHE = 'mauriplay-runtime-v6.0';
 
 const staticAssets = [
   '/offline.html',
@@ -49,87 +49,72 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch - Network First strategy for app, Cache First for static assets
+// Fetch - Never intercept API/backend; cache only static assets
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  const url = new URL(request.url);
+  const reqUrl = request.url;
 
-  // CRITICAL: Never intercept Supabase - pass through all methods (GET, POST, etc.)
-  // to avoid "FetchEvent resulted in a network error response"
-  if (url.hostname.includes('supabase') || request.url.includes('supabase')) {
+  // CRITICAL: Never intercept any API or Supabase request - pass through immediately.
+  // Prevents "FetchEvent resulted in a network error response: the promise was rejected"
+  if (
+    reqUrl.includes('supabase') ||
+    reqUrl.includes('/rest/v1') ||
+    reqUrl.includes('/rpc/') ||
+    reqUrl.includes('/realtime/') ||
+    reqUrl.includes('/auth/v1')
+  ) {
     return;
   }
 
-  // Skip non-GET requests for everything else
+  // Skip non-GET for all other origins
   if (request.method !== 'GET') {
     return;
   }
 
-  // For navigation requests (HTML pages), use Network First with cache fallback
+  // For navigation/document, Network First - never reject the event
   if (request.mode === 'navigate' || request.destination === 'document') {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          // Clone and cache the response
           if (response.ok) {
-            const responseClone = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, responseClone);
-            });
+            const clone = response.clone();
+            caches.open(RUNTIME_CACHE).then((c) => c.put(request, clone));
           }
           return response;
         })
         .catch(() => {
-          // If network fails, try cache
-          return caches.match(request).then((cachedResponse) => {
-            if (cachedResponse) {
-              return cachedResponse;
-            }
-            // Last resort - offline page
-            return caches.match('/offline.html');
-          });
+          return caches.match(request).then((cached) => cached || caches.match('/offline.html'));
         })
     );
     return;
   }
 
-  // For JS/CSS assets, use Network First with short timeout
+  // For script/style: fetch first, fallback to cache (no timeout that could reject)
   if (request.destination === 'script' || request.destination === 'style') {
     event.respondWith(
-      Promise.race([
-        fetch(request).then((response) => {
+      fetch(request)
+        .then((response) => {
           if (response.ok) {
-            const responseClone = response.clone();
-            caches.open(RUNTIME_CACHE).then((cache) => {
-              cache.put(request, responseClone);
-            });
+            const clone = response.clone();
+            caches.open(RUNTIME_CACHE).then((c) => c.put(request, clone));
           }
           return response;
-        }),
-        new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('timeout')), 3000)
-        )
-      ]).catch(() => {
-        return caches.match(request);
-      })
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
 
-  // For static assets (images, icons), use Cache First
+  // Static assets: Cache First
   event.respondWith(
-    caches.match(request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(request).then((response) => {
-        if (response.ok) {
-          const responseClone = response.clone();
-          caches.open(STATIC_CACHE).then((cache) => {
-            cache.put(request, responseClone);
-          });
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request).then((res) => {
+        if (res.ok) {
+          const clone = res.clone();
+          caches.open(STATIC_CACHE).then((c) => c.put(request, clone));
         }
-        return response;
+        return res;
       });
     })
   );

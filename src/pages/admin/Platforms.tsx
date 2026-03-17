@@ -78,7 +78,7 @@ export const Platforms = () => {
         if (error) throw error;
         const result = data as { success?: boolean; message?: string };
         if (result.success === false) {
-          showToast(result.message || 'فشل التحديث', 'error');
+          showToast(result.message || 'Operation failed. Check permissions.', 'error');
           return;
         }
         showToast('تم تحديث المنصة بنجاح', 'success');
@@ -93,7 +93,7 @@ export const Platforms = () => {
         if (error) throw error;
         const result = data as { success?: boolean; message?: string };
         if (result.success === false) {
-          showToast(result.message || 'فشل الإضافة', 'error');
+          showToast(result.message || 'Operation failed. Check permissions.', 'error');
           return;
         }
         showToast('تمت إضافة المنصة بنجاح', 'success');
@@ -103,7 +103,10 @@ export const Platforms = () => {
       await loadPlatforms();
     } catch (error: any) {
       console.error('Submit error:', error);
-      const msg = error.code === '42501' ? 'خطأ في الصلاحيات: تأكد أن حسابك يمتلك رتبة admin' : error.message;
+      const msg =
+        error?.code === '42501'
+          ? 'خطأ في الصلاحيات: تأكد أن حسابك يمتلك رتبة admin'
+          : error?.message || 'Operation failed. Check permissions or try again.';
       showToast(msg, 'error');
     } finally {
       setSubmitting(false);
@@ -143,14 +146,15 @@ export const Platforms = () => {
       if (error) throw error;
       const result = data as { success?: boolean; message?: string };
       if (result.success === false) {
-        showToast(result.message || 'فشل الحذف', 'error');
+        showToast(result.message || 'Operation failed. Check permissions.', 'error');
         return;
       }
       showToast('تم الحذف بنجاح', 'success');
       await loadPlatforms();
     } catch (error: any) {
       console.error('Delete Error:', error);
-      showToast('فشل الحذف - تحقق من صلاحيات الأدمن', 'error');
+      const msg = error?.message || 'Operation failed. Check permissions or try again.';
+      showToast(msg, 'error');
     } finally {
       setLoading(false);
     }
