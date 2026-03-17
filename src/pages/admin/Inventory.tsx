@@ -61,7 +61,11 @@ export const Inventory = () => {
       if (error) throw error;
       setInventory(data || []);
     } catch (error: any) {
-      showToast('فشل تحميل المخزون', 'error');
+      const raw = error?.message || '';
+      const msg = /schema cache|could not find the function|404/i.test(raw)
+        ? 'الخادم لم يحدّث بعد. تأكد من تطبيق migrations (admin_get_inventory).'
+        : raw || 'فشل تحميل المخزون';
+      showToast(msg, 'error');
     }
   };
 
@@ -101,7 +105,11 @@ export const Inventory = () => {
         showToast(data?.message || 'فشلت الإضافة', 'error');
       }
     } catch (error: any) {
-      showToast('فشلت الإضافة', 'error');
+      const raw = error?.message || '';
+      const msg = /schema cache|could not find the function|404/i.test(raw)
+        ? 'الخادم لم يحدّث بعد. تأكد من تطبيق migrations (admin_add_inventory_bulk).'
+        : raw || 'فشلت الإضافة';
+      showToast(msg, 'error');
     }
   };
 
@@ -131,7 +139,11 @@ export const Inventory = () => {
         showToast(data?.message || 'فشل التحديث', 'error');
       }
     } catch (error: any) {
-      showToast('فشل التحديث', 'error');
+      const raw = error?.message || '';
+      const msg = /schema cache|could not find the function|404/i.test(raw)
+        ? 'الخادم لم يحدّث بعد. تأكد من تطبيق migrations (admin_update_inventory).'
+        : raw || 'فشل التحديث';
+      showToast(msg, 'error');
     }
   };
 
@@ -155,7 +167,11 @@ export const Inventory = () => {
         showToast(data?.message || 'فشل الحذف', 'error');
       }
     } catch (error: any) {
-      showToast('فشل الحذف', 'error');
+      const raw = error?.message || '';
+      const msg = /schema cache|could not find the function|404/i.test(raw)
+        ? 'الخادم لم يحدّث بعد. تأكد من تطبيق migrations (admin_delete_inventory).'
+        : raw || 'فشل الحذف';
+      showToast(msg, 'error');
     }
   };
 

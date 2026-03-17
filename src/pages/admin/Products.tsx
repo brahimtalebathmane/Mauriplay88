@@ -104,7 +104,11 @@ export const Products = () => {
       loadData();
     } catch (error: any) {
       console.error('Submit error:', error);
-      showToast(editingId ? 'فشل التحديث' : 'فشلت الإضافة', 'error');
+      const raw = error?.message || '';
+      const msg = /schema cache|could not find the function|404/i.test(raw)
+        ? 'الخادم لم يحدّث بعد. تأكد من تطبيق migrations (admin_insert_product/admin_update_product).'
+        : raw || (editingId ? 'فشل التحديث' : 'فشلت الإضافة');
+      showToast(msg, 'error');
     }
   };
 
@@ -143,7 +147,11 @@ export const Products = () => {
         showToast(result?.message || 'فشل الحذف', 'error');
       }
     } catch (error: any) {
-      showToast('فشل الحذف', 'error');
+      const raw = error?.message || '';
+      const msg = /schema cache|could not find the function|404/i.test(raw)
+        ? 'الخادم لم يحدّث بعد. تأكد من تطبيق migrations (admin_delete_product).'
+        : raw || 'فشل الحذف';
+      showToast(msg, 'error');
     }
   };
 
