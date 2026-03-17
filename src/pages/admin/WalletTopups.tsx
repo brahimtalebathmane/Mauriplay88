@@ -65,6 +65,7 @@ export const WalletTopups = () => {
     try {
       // استخدام RPC لتجاوز قيود الـ RLS المباشرة على الجدول
       const { data, error } = await supabase.rpc('save_app_setting', { 
+        p_admin_phone: user?.phone_number,
         p_key: 'wallet_notice', 
         p_value: notice 
       });

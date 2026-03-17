@@ -9,7 +9,7 @@ import { Copy, Wallet, Ban, CreditCard as Edit2, Save, X } from 'lucide-react';
 export const Users = () => {
   const { user: currentUser } = useStore();
   const [users, setUsers] = useState<any[]>([]);
-  const [_loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [amount, setAmount] = useState('');
   const [editingUserId, setEditingUserId] = useState<string | null>(null);
@@ -156,6 +156,10 @@ export const Users = () => {
     <div>
       <h2 className="text-white text-2xl font-bold mb-6">المستخدمون</h2>
 
+      {loading ? (
+        <div className="text-gray-400 py-12 text-center">جاري التحميل...</div>
+      ) : null}
+
       {selectedUser && (
         <div className="bg-gray-900 rounded-lg p-6 mb-6 border border-white">
           <h3 className="text-white text-xl font-bold mb-4 text-center">
@@ -189,8 +193,11 @@ export const Users = () => {
         </div>
       )}
 
+      {!loading && (
       <div className="space-y-4">
-        {users.map((user) => (
+        {users.length === 0 ? (
+          <div className="text-center text-gray-400 py-12">لا يوجد مستخدمون</div>
+        ) : users.map((user) => (
           <div key={user.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
@@ -277,6 +284,7 @@ export const Users = () => {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 };
