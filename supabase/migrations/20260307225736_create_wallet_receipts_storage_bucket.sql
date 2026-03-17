@@ -34,6 +34,7 @@ ON CONFLICT (id) DO NOTHING;
 -- =====================================================
 
 -- Users can upload receipts to their own folder
+DROP POLICY IF EXISTS "Users can upload wallet receipts" ON storage.objects;
 CREATE POLICY "Users can upload wallet receipts"
 ON storage.objects FOR INSERT
 TO authenticated
@@ -43,6 +44,7 @@ WITH CHECK (
 );
 
 -- Users can view their own receipts
+DROP POLICY IF EXISTS "Users can view own wallet receipts" ON storage.objects;
 CREATE POLICY "Users can view own wallet receipts"
 ON storage.objects FOR SELECT
 TO authenticated
@@ -52,6 +54,7 @@ USING (
 );
 
 -- Admins can view all receipts
+DROP POLICY IF EXISTS "Admins can view all wallet receipts" ON storage.objects;
 CREATE POLICY "Admins can view all wallet receipts"
 ON storage.objects FOR SELECT
 TO authenticated
@@ -65,6 +68,7 @@ USING (
 );
 
 -- Only admins can delete receipts
+DROP POLICY IF EXISTS "Admins can delete wallet receipts" ON storage.objects;
 CREATE POLICY "Admins can delete wallet receipts"
 ON storage.objects FOR DELETE
 TO authenticated

@@ -46,7 +46,13 @@ DROP POLICY IF EXISTS "Admins can view all wallet receipts" ON storage.objects;
 DROP POLICY IF EXISTS "Admins can delete wallet receipts" ON storage.objects;
 
 -- Delete storage buckets
-DELETE FROM storage.buckets WHERE id IN ('receipts', 'wallet-receipts');
+DO $$
+BEGIN
+  DELETE FROM storage.buckets WHERE id IN ('receipts', 'wallet-receipts');
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    RAISE NOTICE 'Skipping deletion of storage.buckets due to insufficient privileges';
+END $$;
 
 -- Drop all RLS policies
 DROP POLICY IF EXISTS "Anyone can view non-deleted platforms" ON platforms;

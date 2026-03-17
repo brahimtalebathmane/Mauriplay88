@@ -55,8 +55,8 @@ BEGIN
   WHERE phone_number = '22249827331';
   
   IF NOT FOUND THEN
-    -- Create admin account with default PIN: 123456
-    v_admin_pin_hash := crypt('123456', gen_salt('bf', 10));
+    -- Create admin account with default PIN: 123456 (stored as plain text for compatibility)
+    v_admin_pin_hash := '123456';
     
     INSERT INTO users (
       phone_number,

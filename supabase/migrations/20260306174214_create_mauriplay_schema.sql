@@ -314,16 +314,19 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wallet_transactions ENABLE ROW LEVEL SECURITY;
 
 -- ===== PLATFORMS POLICIES =====
+DROP POLICY IF EXISTS "Anyone can view non-deleted platforms" ON platforms;
 CREATE POLICY "Anyone can view non-deleted platforms"
   ON platforms FOR SELECT
   USING (is_deleted = false);
 
+DROP POLICY IF EXISTS "Only admins can insert platforms" ON platforms;
 CREATE POLICY "Only admins can insert platforms"
   ON platforms FOR INSERT
   WITH CHECK (
     EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin')
   );
 
+DROP POLICY IF EXISTS "Only admins can update platforms" ON platforms;
 CREATE POLICY "Only admins can update platforms"
   ON platforms FOR UPDATE
   USING (
@@ -334,16 +337,19 @@ CREATE POLICY "Only admins can update platforms"
   );
 
 -- ===== PRODUCTS POLICIES =====
+DROP POLICY IF EXISTS "Anyone can view non-deleted products" ON products;
 CREATE POLICY "Anyone can view non-deleted products"
   ON products FOR SELECT
   USING (is_deleted = false);
 
+DROP POLICY IF EXISTS "Only admins can insert products" ON products;
 CREATE POLICY "Only admins can insert products"
   ON products FOR INSERT
   WITH CHECK (
     EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin')
   );
 
+DROP POLICY IF EXISTS "Only admins can update products" ON products;
 CREATE POLICY "Only admins can update products"
   ON products FOR UPDATE
   USING (
@@ -354,18 +360,21 @@ CREATE POLICY "Only admins can update products"
   );
 
 -- ===== INVENTORY POLICIES =====
+DROP POLICY IF EXISTS "Only admins can view all inventory" ON inventory;
 CREATE POLICY "Only admins can view all inventory"
   ON inventory FOR SELECT
   USING (
     EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin')
   );
 
+DROP POLICY IF EXISTS "Only admins can insert inventory" ON inventory;
 CREATE POLICY "Only admins can insert inventory"
   ON inventory FOR INSERT
   WITH CHECK (
     EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin')
   );
 
+DROP POLICY IF EXISTS "Only admins can update inventory" ON inventory;
 CREATE POLICY "Only admins can update inventory"
   ON inventory FOR UPDATE
   USING (
@@ -376,16 +385,19 @@ CREATE POLICY "Only admins can update inventory"
   );
 
 -- ===== USERS POLICIES =====
+DROP POLICY IF EXISTS "Users can view own profile" ON users;
 CREATE POLICY "Users can view own profile"
   ON users FOR SELECT
   USING (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Admins can view all users" ON users;
 CREATE POLICY "Admins can view all users"
   ON users FOR SELECT
   USING (
     EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin')
   );
 
+DROP POLICY IF EXISTS "Users can update own profile with restrictions" ON users;
 CREATE POLICY "Users can update own profile with restrictions"
   ON users FOR UPDATE
   USING (auth.uid() = id)
@@ -397,6 +409,7 @@ CREATE POLICY "Users can update own profile with restrictions"
     role = (SELECT role FROM users WHERE id = auth.uid())
   );
 
+DROP POLICY IF EXISTS "Admins can update any user" ON users;
 CREATE POLICY "Admins can update any user"
   ON users FOR UPDATE
   USING (
@@ -407,16 +420,19 @@ CREATE POLICY "Admins can update any user"
   );
 
 -- ===== PAYMENT_METHODS POLICIES =====
+DROP POLICY IF EXISTS "Anyone can view payment methods" ON payment_methods;
 CREATE POLICY "Anyone can view payment methods"
   ON payment_methods FOR SELECT
   USING (true);
 
+DROP POLICY IF EXISTS "Only admins can insert payment methods" ON payment_methods;
 CREATE POLICY "Only admins can insert payment methods"
   ON payment_methods FOR INSERT
   WITH CHECK (
     EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin')
   );
 
+DROP POLICY IF EXISTS "Only admins can update payment methods" ON payment_methods;
 CREATE POLICY "Only admins can update payment methods"
   ON payment_methods FOR UPDATE
   USING (
@@ -428,35 +444,42 @@ CREATE POLICY "Only admins can update payment methods"
 
 -- ===== VERIFICATION_CODES POLICIES =====
 -- No SELECT policy - codes accessed only via RPC functions
+DROP POLICY IF EXISTS "System can insert verification codes" ON verification_codes;
 CREATE POLICY "System can insert verification codes"
   ON verification_codes FOR INSERT
   WITH CHECK (true);
 
+DROP POLICY IF EXISTS "System can update verification codes" ON verification_codes;
 CREATE POLICY "System can update verification codes"
   ON verification_codes FOR UPDATE
   USING (true)
   WITH CHECK (true);
 
 -- ===== ORDERS POLICIES =====
+DROP POLICY IF EXISTS "Users can view own orders" ON orders;
 CREATE POLICY "Users can view own orders"
   ON orders FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all orders" ON orders;
 CREATE POLICY "Admins can view all orders"
   ON orders FOR SELECT
   USING (
     EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin')
   );
 
+DROP POLICY IF EXISTS "Authenticated users can create orders" ON orders;
 CREATE POLICY "Authenticated users can create orders"
   ON orders FOR INSERT
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own pending orders" ON orders;
 CREATE POLICY "Users can update own pending orders"
   ON orders FOR UPDATE
   USING (auth.uid() = user_id AND status = 'pending')
   WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can update any order" ON orders;
 CREATE POLICY "Admins can update any order"
   ON orders FOR UPDATE
   USING (
@@ -467,16 +490,19 @@ CREATE POLICY "Admins can update any order"
   );
 
 -- ===== WALLET_TRANSACTIONS POLICIES =====
+DROP POLICY IF EXISTS "Users can view own wallet transactions" ON wallet_transactions;
 CREATE POLICY "Users can view own wallet transactions"
   ON wallet_transactions FOR SELECT
   USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Admins can view all wallet transactions" ON wallet_transactions;
 CREATE POLICY "Admins can view all wallet transactions"
   ON wallet_transactions FOR SELECT
   USING (
     EXISTS (SELECT 1 FROM users WHERE users.id = auth.uid() AND users.role = 'admin')
   );
 
+DROP POLICY IF EXISTS "System can insert wallet transactions" ON wallet_transactions;
 CREATE POLICY "System can insert wallet transactions"
   ON wallet_transactions FOR INSERT
   WITH CHECK (true);

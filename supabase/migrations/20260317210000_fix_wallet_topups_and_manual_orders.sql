@@ -261,17 +261,20 @@ DROP POLICY IF EXISTS "Admins can delete wallet receipts" ON storage.objects;
 
 -- Allow public uploads and reads to wallet-receipts bucket.
 -- NOTE: The bucket remains non-public at the bucket level; these policies govern access.
+DROP POLICY IF EXISTS "Public can upload wallet receipts" ON storage.objects;
 CREATE POLICY "Public can upload wallet receipts"
 ON storage.objects FOR INSERT
 TO public
 WITH CHECK (bucket_id = 'wallet-receipts');
 
+DROP POLICY IF EXISTS "Public can view wallet receipts" ON storage.objects;
 CREATE POLICY "Public can view wallet receipts"
 ON storage.objects FOR SELECT
 TO public
 USING (bucket_id = 'wallet-receipts');
 
 -- Optionally allow deletes (used only from admin tools / service key if any)
+DROP POLICY IF EXISTS "Public can delete wallet receipts" ON storage.objects;
 CREATE POLICY "Public can delete wallet receipts"
 ON storage.objects FOR DELETE
 TO public

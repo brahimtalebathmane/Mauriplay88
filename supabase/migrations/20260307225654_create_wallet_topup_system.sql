@@ -119,12 +119,14 @@ ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 -- =====================================================
 
 -- Users can view their own wallet top-ups
+DROP POLICY IF EXISTS "Users can view own wallet topups" ON wallet_topups;
 CREATE POLICY "Users can view own wallet topups"
   ON wallet_topups FOR SELECT
   TO authenticated
   USING (auth.uid() = user_id);
 
 -- Admins can view all wallet top-ups
+DROP POLICY IF EXISTS "Admins can view all wallet topups" ON wallet_topups;
 CREATE POLICY "Admins can view all wallet topups"
   ON wallet_topups FOR SELECT
   TO authenticated
@@ -137,12 +139,14 @@ CREATE POLICY "Admins can view all wallet topups"
   );
 
 -- Users can insert their own wallet top-ups (with limit check via trigger)
+DROP POLICY IF EXISTS "Users can create own wallet topups" ON wallet_topups;
 CREATE POLICY "Users can create own wallet topups"
   ON wallet_topups FOR INSERT
   TO authenticated
   WITH CHECK (auth.uid() = user_id);
 
 -- Users can update only their own pending wallet top-ups (to update receipt)
+DROP POLICY IF EXISTS "Users can update own pending topups" ON wallet_topups;
 CREATE POLICY "Users can update own pending topups"
   ON wallet_topups FOR UPDATE
   TO authenticated
@@ -150,6 +154,7 @@ CREATE POLICY "Users can update own pending topups"
   WITH CHECK (auth.uid() = user_id AND status = 'pending');
 
 -- Admins can update any wallet top-up
+DROP POLICY IF EXISTS "Admins can update wallet topups" ON wallet_topups;
 CREATE POLICY "Admins can update wallet topups"
   ON wallet_topups FOR UPDATE
   TO authenticated
@@ -162,6 +167,7 @@ CREATE POLICY "Admins can update wallet topups"
   );
 
 -- Users can delete their own pending wallet top-ups
+DROP POLICY IF EXISTS "Users can delete own pending topups" ON wallet_topups;
 CREATE POLICY "Users can delete own pending topups"
   ON wallet_topups FOR DELETE
   TO authenticated
@@ -172,12 +178,14 @@ CREATE POLICY "Users can delete own pending topups"
 -- =====================================================
 
 -- Anyone authenticated can read settings
+DROP POLICY IF EXISTS "Authenticated users can read settings" ON settings;
 CREATE POLICY "Authenticated users can read settings"
   ON settings FOR SELECT
   TO authenticated
   USING (true);
 
 -- Only admins can modify settings
+DROP POLICY IF EXISTS "Admins can update settings" ON settings;
 CREATE POLICY "Admins can update settings"
   ON settings FOR UPDATE
   TO authenticated
@@ -189,6 +197,7 @@ CREATE POLICY "Admins can update settings"
     )
   );
 
+DROP POLICY IF EXISTS "Admins can insert settings" ON settings;
 CREATE POLICY "Admins can insert settings"
   ON settings FOR INSERT
   TO authenticated

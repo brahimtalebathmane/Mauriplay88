@@ -69,7 +69,7 @@ BEGIN
       is_active
     ) VALUES (
       '22223456789',
-      crypt('1234', gen_salt('bf', 10)),
+      '1234',
       1000.00,
       true,
       'admin',
