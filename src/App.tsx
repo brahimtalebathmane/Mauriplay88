@@ -15,18 +15,12 @@ import { Wallet } from './pages/Wallet';
 import { WalletTopup } from './pages/WalletTopup';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { AdminDashboard } from './pages/admin/Dashboard';
-import { getUserVerificationStatus } from './utils/auth';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn, user } = useStore();
-  const isVerified = getUserVerificationStatus(user);
 
   if (!isLoggedIn || !user) {
     return <Navigate to="/login" replace />;
-  }
-
-  if (user.role !== 'admin' && !isVerified) {
-    return <Navigate to="/verify-otp" replace />;
   }
 
   return <>{children}</>;
@@ -34,18 +28,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn, user } = useStore();
-  const isVerified = getUserVerificationStatus(user);
 
   if (isLoggedIn && user?.role === 'admin') {
     return <Navigate to="/admin" replace />;
   }
 
-  if (isLoggedIn && isVerified) {
+  if (isLoggedIn) {
     return <Navigate to="/" replace />;
-  }
-
-  if (isLoggedIn && user) {
-    return <Navigate to="/verify-otp" replace />;
   }
 
   return <>{children}</>;

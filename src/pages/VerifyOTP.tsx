@@ -6,7 +6,6 @@ import { supabase } from '../lib/supabase';
 import { useStore } from '../store/useStore';
 import { showToast } from '../components/Toast';
 import { formatPhoneForDisplay } from '../utils/phoneNumber';
-import { getUserVerificationStatus } from '../utils/auth';
 import { MessageSquare, RefreshCcw, ArrowRight, ShieldCheck } from 'lucide-react';
 
 export const VerifyOTP = () => {
@@ -19,20 +18,10 @@ export const VerifyOTP = () => {
   const [countdown, setCountdown] = useState(60);
 
   useEffect(() => {
+    // If already logged in (which implies verified for non-admin users),
+    // send straight to the appropriate home.
     if (isLoggedIn && user) {
-      if (user.role === 'admin' || getUserVerificationStatus(user)) {
-        navigate(user.role === 'admin' ? '/admin' : '/', { replace: true });
-        return;
-      }
-
-      const pendingPhone = localStorage.getItem('pending_phone');
-      if (pendingPhone) {
-        setPhone(pendingPhone);
-        return;
-      }
-
-      localStorage.setItem('pending_phone', user.phone_number);
-      setPhone(user.phone_number);
+      navigate(user.role === 'admin' ? '/admin' : '/', { replace: true });
       return;
     }
 
