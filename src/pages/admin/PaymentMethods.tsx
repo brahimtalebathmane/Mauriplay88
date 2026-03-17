@@ -5,12 +5,12 @@ import { Input } from '../../components/Input';
 import { showToast } from '../../components/Toast';
 import { useStore } from '../../store/useStore';
 import type { PaymentMethod } from '../../types';
-import { Plus, Power } from 'lucide-react';
+import { Plus, Power, Trash2 } from 'lucide-react';
 
 export const PaymentMethods = () => {
   const { user } = useStore();
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
-  const [_loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -19,18 +19,23 @@ export const PaymentMethods = () => {
   });
 
   useEffect(() => {
-    loadMethods();
-  }, []);
+    if (user?.phone_number) {
+      loadMethods();
+    } else {
+      setLoading(false);
+    }
+  }, [user?.phone_number]);
 
   const loadMethods = async () => {
+    if (!user?.phone_number) return;
     try {
-      const { data, error } = await supabase
-        .from('payment_methods')
-        .select('*')
-        .order('name');
+      setLoading(true);
+      const { data, error } = await supabase.rpc('get_payment_methods_for_admin', {
+        p_admin_phone: user.phone_number,
+      });
 
       if (error) throw error;
-      setMethods(data || []);
+      setMethods((data as PaymentMethod[]) || []);
     } catch (error: any) {
       showToast('فشل تحميل وسائل الدفع', 'error');
     } finally {
@@ -92,6 +97,30 @@ export const PaymentMethods = () => {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    if (!user || user.role !== 'admin') {
+      showToast('غير مصرح', 'error');
+      return;
+    }
+    if (!confirm('هل أنت متأكد من حذف وسيلة الدفع هذه؟')) return;
+    try {
+      const { data, error } = await supabase.rpc('admin_delete_payment_method', {
+        p_admin_phone: user.phone_number,
+        p_method_id: id,
+      });
+      if (error) throw error;
+      const result = data as { success?: boolean; message?: string };
+      if (result?.success) {
+        showToast(result.message || 'تم الحذف', 'success');
+        await loadMethods();
+      } else {
+        showToast(result?.message || 'فشل الحذف', 'error');
+      }
+    } catch (error: any) {
+      showToast('فشل الحذف', 'error');
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -140,6 +169,9 @@ export const PaymentMethods = () => {
         </form>
       )}
 
+      {loading ? (
+        <div className="text-gray-400 py-8 text-center">جاري التحميل...</div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {methods.map((method) => (
           <div key={method.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800">
@@ -148,20 +180,29 @@ export const PaymentMethods = () => {
                 <h3 className="text-white text-xl font-bold mb-2">{method.name}</h3>
                 <p className="text-gray-400 font-mono">{method.account_number}</p>
               </div>
-              <button
-                onClick={() => toggleActive(method.id, method.is_active)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                  method.is_active
-                    ? 'bg-green-900/20 text-green-400 hover:bg-green-900/30'
-                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                }`}
-                title={method.is_active ? 'تعطيل' : 'تفعيل'}
-              >
-                <Power className="w-4 h-4" />
-                <span className="text-sm">
-                  {method.is_active ? 'نشط' : 'معطل'}
-                </span>
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => toggleActive(method.id, method.is_active)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    method.is_active
+                      ? 'bg-green-900/20 text-green-400 hover:bg-green-900/30'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                  title={method.is_active ? 'تعطيل' : 'تفعيل'}
+                >
+                  <Power className="w-4 h-4" />
+                  <span className="text-sm">
+                    {method.is_active ? 'نشط' : 'معطل'}
+                  </span>
+                </button>
+                <button
+                  onClick={() => handleDelete(method.id)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-900/20 text-red-400 hover:bg-red-900/30 transition-colors"
+                  title="حذف"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             {method.logo_url && (
               <img
@@ -173,6 +214,7 @@ export const PaymentMethods = () => {
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 };

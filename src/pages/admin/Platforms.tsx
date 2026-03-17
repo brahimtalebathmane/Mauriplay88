@@ -28,14 +28,10 @@ export const Platforms = () => {
   const loadPlatforms = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('platforms')
-        .select('*')
-        .eq('is_deleted', false)
-        .order('name');
+      const { data, error } = await supabase.rpc('get_platforms');
 
       if (error) throw error;
-      setPlatforms(data || []);
+      setPlatforms((data as Platform[]) || []);
     } catch (error: any) {
       console.error('Load Error:', error);
       showToast('فشل تحميل المنصات', 'error');

@@ -135,11 +135,12 @@ export const Products = () => {
       });
 
       if (error) throw error;
-      if (data?.success) {
-        showToast(data.message, 'success');
-        loadData();
+      const result = data as { success?: boolean; message?: string };
+      if (result?.success) {
+        showToast(result.message || 'تم الحذف بنجاح', 'success');
+        await loadData();
       } else {
-        showToast(data?.message || 'فشل الحذف', 'error');
+        showToast(result?.message || 'فشل الحذف', 'error');
       }
     } catch (error: any) {
       showToast('فشل الحذف', 'error');
