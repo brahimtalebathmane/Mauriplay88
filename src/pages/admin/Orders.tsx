@@ -20,25 +20,46 @@ export const Orders = () => {
   }, [filter]);
 
   const loadOrders = async () => {
+    if (!user?.id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     try {
-      let query = supabase
-        .from('orders')
-        .select(`
-          *,
-          user:users(phone_number),
-          product:products(name),
-          inventory:inventory(code)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (filter !== 'all') {
-        query = query.eq('status', filter);
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc('get_admin_orders', {
+        p_admin_id: user.id,
+        p_status: filter !== 'all' ? filter : null,
+      });
 
       if (error) throw error;
-      setOrders(data || []);
+      const rows = (data || []) as Array<{
+        id: string;
+        user_id: string | null;
+        product_id: string | null;
+        inventory_id: string | null;
+        price_at_purchase: number;
+        payment_type: string;
+        payment_method_name: string | null;
+        user_payment_number: string | null;
+        user_name: string | null;
+        receipt_url: string | null;
+        transaction_reference: string | null;
+        status: string;
+        admin_note: string | null;
+        created_at: string;
+        updated_at: string;
+        user_phone_number: string | null;
+        product_name: string | null;
+        inventory_code: string | null;
+      }>;
+      setOrders(
+        rows.map((o) => ({
+          ...o,
+          user: { phone_number: o.user_phone_number ?? '' },
+          product: { name: o.product_name ?? 'منتج محذوف' },
+          inventory: { code: o.inventory_code ?? '' },
+        }))
+      );
     } catch (error: any) {
       showToast('فشل تحميل الطلبات', 'error');
     } finally {

@@ -20,11 +20,14 @@ export const Users = () => {
   }, []);
 
   const loadUsers = async () => {
+    if (!currentUser?.id) {
+      setLoading(false);
+      return;
+    }
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const { data, error } = await supabase.rpc('get_admin_users', {
+        p_admin_id: currentUser.id,
+      });
 
       if (error) throw error;
       setUsers(data || []);
@@ -67,38 +70,48 @@ export const Users = () => {
   };
 
   const toggleWalletActive = async (userId: string, currentStatus: boolean) => {
+    if (!currentUser?.phone_number) {
+      showToast('غير مصرح', 'error');
+      return;
+    }
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ wallet_active: !currentStatus })
-        .eq('id', userId);
+      const { data, error } = await supabase.rpc('admin_toggle_wallet_active', {
+        p_admin_phone: currentUser.phone_number,
+        p_user_id: userId,
+      });
 
       if (error) throw error;
-
-      showToast(
-        !currentStatus ? 'تم تفعيل المحفظة' : 'تم إلغاء تفعيل المحفظة',
-        'success'
-      );
-      loadUsers();
+      const result = data as { success?: boolean; message?: string };
+      if (result?.success) {
+        showToast(result.message || 'تم التحديث', 'success');
+        await loadUsers();
+      } else {
+        showToast(result?.message || 'فشل التحديث', 'error');
+      }
     } catch (error: any) {
       showToast('فشل التحديث', 'error');
     }
   };
 
   const toggleUserActive = async (userId: string, currentStatus: boolean) => {
+    if (!currentUser?.phone_number) {
+      showToast('غير مصرح', 'error');
+      return;
+    }
     try {
-      const { error } = await supabase
-        .from('users')
-        .update({ is_active: !currentStatus })
-        .eq('id', userId);
+      const { data, error } = await supabase.rpc('admin_toggle_user_active', {
+        p_admin_phone: currentUser.phone_number,
+        p_user_id: userId,
+      });
 
       if (error) throw error;
-
-      showToast(
-        !currentStatus ? 'تم تفعيل الحساب' : 'تم تعطيل الحساب',
-        'success'
-      );
-      loadUsers();
+      const result = data as { success?: boolean; message?: string };
+      if (result?.success) {
+        showToast(result.message || 'تم التحديث', 'success');
+        await loadUsers();
+      } else {
+        showToast(result?.message || 'فشل التحديث', 'error');
+      }
     } catch (error: any) {
       showToast('فشل التحديث', 'error');
     }

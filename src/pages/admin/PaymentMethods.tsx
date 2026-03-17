@@ -3,10 +3,12 @@ import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { showToast } from '../../components/Toast';
+import { useStore } from '../../store/useStore';
 import type { PaymentMethod } from '../../types';
 import { Plus, Power } from 'lucide-react';
 
 export const PaymentMethods = () => {
+  const { user } = useStore();
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [_loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -38,34 +40,53 @@ export const PaymentMethods = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user || user.role !== 'admin') {
+      showToast('غير مصرح - صلاحيات الأدمن مطلوبة', 'error');
+      return;
+    }
     try {
-      const { error } = await supabase.from('payment_methods').insert([formData]);
+      const { data, error } = await supabase.rpc('admin_insert_payment_method', {
+        p_admin_phone: user.phone_number,
+        p_name: formData.name.trim(),
+        p_account_number: formData.account_number.trim(),
+        p_logo_url: formData.logo_url.trim() || null,
+      });
 
       if (error) throw error;
-
-      showToast('تمت إضافة وسيلة الدفع', 'success');
-      setShowForm(false);
-      setFormData({ name: '', account_number: '', logo_url: '' });
-      loadMethods();
+      const result = data as { success?: boolean; message?: string };
+      if (result?.success) {
+        showToast(result.message || 'تمت إضافة وسيلة الدفع', 'success');
+        setShowForm(false);
+        setFormData({ name: '', account_number: '', logo_url: '' });
+        await loadMethods();
+      } else {
+        showToast(result?.message || 'فشلت الإضافة', 'error');
+      }
     } catch (error: any) {
       showToast('فشلت الإضافة', 'error');
     }
   };
 
   const toggleActive = async (id: string, currentStatus: boolean) => {
+    if (!user || user.role !== 'admin') {
+      showToast('غير مصرح', 'error');
+      return;
+    }
     try {
-      const { error } = await supabase
-        .from('payment_methods')
-        .update({ is_active: !currentStatus })
-        .eq('id', id);
+      const { data, error } = await supabase.rpc('admin_update_payment_method', {
+        p_admin_phone: user.phone_number,
+        p_method_id: id,
+        p_is_active: !currentStatus,
+      });
 
       if (error) throw error;
-
-      showToast(
-        !currentStatus ? 'تم تفعيل وسيلة الدفع' : 'تم تعطيل وسيلة الدفع',
-        'success'
-      );
-      loadMethods();
+      const result = data as { success?: boolean; message?: string };
+      if (result?.success) {
+        showToast(result.message || (!currentStatus ? 'تم تفعيل وسيلة الدفع' : 'تم تعطيل وسيلة الدفع'), 'success');
+        await loadMethods();
+      } else {
+        showToast(result?.message || 'فشل تحديث الحالة', 'error');
+      }
     } catch (error: any) {
       showToast('فشل تحديث الحالة', 'error');
     }

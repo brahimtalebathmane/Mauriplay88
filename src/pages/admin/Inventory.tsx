@@ -30,8 +30,11 @@ export const Inventory = () => {
 
   useEffect(() => {
     loadProducts();
-    loadInventory();
   }, []);
+
+  useEffect(() => {
+    if (user?.phone_number) loadInventory();
+  }, [user?.phone_number]);
 
   const loadProducts = async () => {
     try {

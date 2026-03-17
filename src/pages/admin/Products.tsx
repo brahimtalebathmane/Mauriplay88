@@ -55,6 +55,10 @@ export const Products = () => {
       showToast('غير مصرح - يرجى تسجيل الدخول', 'error');
       return;
     }
+    if (user.role !== 'admin') {
+      showToast('غير مصرح - صلاحيات الأدمن مطلوبة', 'error');
+      return;
+    }
 
     try {
       if (editingId) {
@@ -64,31 +68,32 @@ export const Products = () => {
           p_product_id: editingId,
           p_name: formData.name,
           p_price_mru: parseFloat(formData.price_mru),
+          p_logo_url: formData.product_logo_url.trim() || null,
         });
 
         if (error) throw error;
-        if (data?.success) {
-          showToast(data.message, 'success');
+        const result = data as { success?: boolean; message?: string };
+        if (result?.success) {
+          showToast(result.message || 'تم التحديث', 'success');
         } else {
-          showToast(data?.message || 'فشل التحديث', 'error');
+          showToast(result?.message || 'فشل التحديث', 'error');
           return;
         }
       } else {
-        // إضافة المنتج عبر RPC (استخدام التعديل الجديد لمعالجة الشعار)
-        const { data, error } = await supabase.rpc('add_product_v2', {
+        const { data, error } = await supabase.rpc('admin_insert_product', {
+          p_admin_phone: user.phone_number,
           p_platform_id: formData.platform_id,
           p_name: formData.name,
           p_price_mru: parseFloat(formData.price_mru),
-          // نرسل null إذا كان الحقل فارغاً لتتولى الدالة وضع الشعار الافتراضي
-          p_product_logo_url: formData.product_logo_url.trim() || null,
+          p_logo_url: formData.product_logo_url.trim() || null,
         });
 
         if (error) throw error;
-        
-        if (data?.success) {
+        const result = data as { success?: boolean; message?: string };
+        if (result?.success) {
           showToast('تمت إضافة المنتج بنجاح', 'success');
         } else {
-          showToast(data?.message || 'فشلت الإضافة - تحقق من البيانات', 'error');
+          showToast(result?.message || 'فشلت الإضافة - تحقق من البيانات', 'error');
           return;
         }
       }
@@ -109,7 +114,7 @@ export const Products = () => {
       platform_id: product.platform_id,
       name: product.name,
       price_mru: product.price_mru.toString(),
-      product_logo_url: product.product_logo_url || '',
+      product_logo_url: product.logo_url ?? product.product_logo_url ?? '',
     });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -224,7 +229,7 @@ export const Products = () => {
           <div key={product.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-blue-500/50 transition-all duration-300">
             <div className="h-16 flex items-center justify-center mb-3 bg-black/20 rounded">
               <img 
-                src={product.product_logo_url || 'https://placehold.co/400x400?text=No+Logo'} 
+                src={product.logo_url ?? product.product_logo_url ?? 'https://placehold.co/400x400?text=No+Logo'} 
                 alt="" 
                 className="max-h-full object-contain" 
               />
