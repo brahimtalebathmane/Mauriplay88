@@ -97,11 +97,17 @@ export const WalletTopups = () => {
     }
 
     try {
-      const { data, error } = await supabase.rpc('get_all_wallet_topups', {
+      // RPC expects: p_admin_id (uuid), p_status (text | null), p_search_phone (text | null)
+      const params: {
+        p_admin_id: string;
+        p_status: string | null;
+        p_search_phone: string | null;
+      } = {
         p_admin_id: user.id,
-        p_status: filter !== 'all' ? filter : null,
-        p_search_phone: searchPhone || null,
-      });
+        p_status: filter === 'all' ? null : filter,
+        p_search_phone: searchPhone?.trim() ? searchPhone.trim() : null,
+      };
+      const { data, error } = await supabase.rpc('get_all_wallet_topups', params);
 
       if (error) {
         console.error('RPC error:', error);
