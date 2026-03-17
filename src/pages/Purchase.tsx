@@ -95,6 +95,11 @@ export const Purchase = () => {
         });
 
         updateWalletBalance(user.wallet_balance - product.price_mru);
+        supabase.rpc('get_user_balance', { p_user_id: user.id }).then(({ data: bal }) => {
+          if (bal?.success && typeof bal.wallet_balance === 'number') {
+            updateWalletBalance(bal.wallet_balance);
+          }
+        });
 
         setPurchaseData({
           code: data.code,

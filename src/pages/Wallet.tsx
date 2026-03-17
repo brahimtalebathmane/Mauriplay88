@@ -63,12 +63,25 @@ export const Wallet = () => {
     };
   }, [user?.id, updateWalletBalance]);
 
+  const refreshBalance = async () => {
+    if (!user?.id) return;
+    try {
+      const { data, error } = await supabase.rpc('get_user_balance', { p_user_id: user.id });
+      if (!error && data?.success && typeof data.wallet_balance === 'number') {
+        updateWalletBalance(data.wallet_balance);
+      }
+    } catch (_) {
+      /* ignore */
+    }
+  };
+
   const loadTransactions = async () => {
     if (!user?.phone_number) {
       setLoading(false);
       return;
     }
     try {
+      await refreshBalance();
       const { data, error } = await supabase.rpc('get_wallet_transactions', {
         p_phone_number: user.phone_number,
       });
