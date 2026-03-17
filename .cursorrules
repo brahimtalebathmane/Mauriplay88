@@ -1,0 +1,1 @@
+After completing any task that involves code modifications and after the user clicks Apply, you must automatically stage the changes, create a descriptive commit message, and push to the remote repository without asking for permission every time.

@@ -51,34 +51,44 @@ export const Platforms = () => {
       showToast('غير مصرح - الرجاء تسجيل الدخول', 'error');
       return;
     }
+    if (user.role !== 'admin') {
+      showToast('غير مصرح - صلاحيات الأدمن مطلوبة', 'error');
+      return;
+    }
 
     try {
       setSubmitting(true);
-      
-      const platformData = {
-        name: formData.name.trim(),
-        logo_url: formData.logo_url.trim(),
-        website_url: formData.website_url.trim() || null,
-        tutorial_video_url: formData.tutorial_video_url.trim() || null,
-        is_deleted: false,
-      };
 
       if (editingId) {
-        // عملية التعديل
-        const { error } = await supabase
-          .from('platforms')
-          .update(platformData)
-          .eq('id', editingId);
-
+        const { data, error } = await supabase.rpc('admin_update_platform', {
+          p_admin_phone: user.phone_number,
+          p_platform_id: editingId,
+          p_name: formData.name.trim(),
+          p_logo_url: formData.logo_url.trim(),
+          p_website_url: formData.website_url.trim() || null,
+          p_tutorial_video_url: formData.tutorial_video_url.trim() || null,
+        });
         if (error) throw error;
+        const result = data as { success?: boolean; message?: string };
+        if (result.success === false) {
+          showToast(result.message || 'فشل التحديث', 'error');
+          return;
+        }
         showToast('تم تحديث المنصة بنجاح', 'success');
       } else {
-        // عملية الإضافة
-        const { error } = await supabase
-          .from('platforms')
-          .insert([platformData]);
-
+        const { data, error } = await supabase.rpc('admin_insert_platform', {
+          p_admin_phone: user.phone_number,
+          p_name: formData.name.trim(),
+          p_logo_url: formData.logo_url.trim(),
+          p_website_url: formData.website_url.trim() || null,
+          p_tutorial_video_url: formData.tutorial_video_url.trim() || null,
+        });
         if (error) throw error;
+        const result = data as { success?: boolean; message?: string };
+        if (result.success === false) {
+          showToast(result.message || 'فشل الإضافة', 'error');
+          return;
+        }
         showToast('تمت إضافة المنصة بنجاح', 'success');
       }
 
@@ -86,7 +96,6 @@ export const Platforms = () => {
       await loadPlatforms();
     } catch (error: any) {
       console.error('Submit error:', error);
-      // معالجة خطأ الصلاحيات 42501 بشكل واضح
       const msg = error.code === '42501' ? 'خطأ في الصلاحيات: تأكد أن حسابك يمتلك رتبة admin' : error.message;
       showToast(msg, 'error');
     } finally {
@@ -107,21 +116,30 @@ export const Platforms = () => {
   };
 
   const handleDelete = async (id: string) => {
+    if (!user) {
+      showToast('غير مصرح - الرجاء تسجيل الدخول', 'error');
+      return;
+    }
+    if (user.role !== 'admin') {
+      showToast('غير مصرح - صلاحيات الأدمن مطلوبة', 'error');
+      return;
+    }
     if (!confirm('هل أنت متأكد من حذف هذه المنصة؟')) return;
 
     try {
       setLoading(true);
-      // استخدام تحديث الحقل is_deleted كحذف ناعم
-      const { error } = await supabase
-        .from('platforms')
-        .update({ is_deleted: true })
-        .eq('id', id);
-
+      const { data, error } = await supabase.rpc('admin_delete_platform', {
+        p_admin_phone: user.phone_number,
+        p_platform_id: id,
+      });
       if (error) throw error;
-
+      const result = data as { success?: boolean; message?: string };
+      if (result.success === false) {
+        showToast(result.message || 'فشل الحذف', 'error');
+        return;
+      }
       showToast('تم الحذف بنجاح', 'success');
-      // تحديث الحالة محلياً فوراً لضمان اختفاء العنصر حتى لو تأخرت القاعدة
-      setPlatforms(prev => prev.filter(p => p.id !== id));
+      await loadPlatforms();
     } catch (error: any) {
       console.error('Delete Error:', error);
       showToast('فشل الحذف - تحقق من صلاحيات الأدمن', 'error');
