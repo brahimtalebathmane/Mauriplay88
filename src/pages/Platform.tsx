@@ -4,7 +4,7 @@ import { Header } from '../components/Header';
 import { supabase } from '../lib/supabase';
 import type { Platform, ProductWithStock } from '../types';
 import { showToast } from '../components/Toast';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 export const PlatformPage = () => {
   const { id } = useParams<{ id: string }>();
@@ -33,25 +33,39 @@ export const PlatformPage = () => {
       if (platformError) throw platformError;
       setPlatform(platformData);
 
-      // 2. جلب المنتجات مع حساب المخزون المتوفر لكل منتج
-      // سنستخدم استعلاماً ذكياً يجلب المنتج وعدد الأكواد المتاحة له (available)
+      // 2. جلب المنتجات (بدون مخزون - RLS يمنع المستخدمين من رؤية inventory مباشرة)
       const { data: productsData, error: productsError } = await supabase
         .from('products')
-        .select(`
-          *,
-          inventory(count)
-        `)
+        .select('*')
         .eq('platform_id', id)
         .eq('is_deleted', false)
-        .eq('inventory.status', 'available') // نعد فقط الأكواد المتاحة
-        .eq('inventory.is_deleted', false);
+        .order('name');
 
       if (productsError) throw productsError;
 
-      // تحويل البيانات لتناسب الواجهة (ProductWithStock)
-      const formattedProducts = (productsData || []).map((product: any) => ({
+      const productList = productsData || [];
+      if (productList.length === 0) {
+        setProducts([]);
+        return;
+      }
+
+      // 3. جلب عدد الأكواد المتاحة عبر RPC (SECURITY DEFINER) لتفادي RLS
+      const { data: stockData, error: stockError } = await supabase.rpc('get_product_stock_count', {
+        p_product_ids: productList.map((p: { id: string }) => p.id),
+      });
+
+      if (stockError) {
+        console.warn('Stock count RPC failed, showing 0 stock', stockError);
+      }
+
+      const stockMap = new Map<string, number>();
+      (stockData || []).forEach((row: { product_id: string; stock_count: number }) => {
+        stockMap.set(row.product_id, Number(row.stock_count) || 0);
+      });
+
+      const formattedProducts = productList.map((product: any) => ({
         ...product,
-        stock_count: product.inventory?.[0]?.count || 0
+        stock_count: stockMap.get(product.id) ?? 0,
       }));
 
       setProducts(formattedProducts);

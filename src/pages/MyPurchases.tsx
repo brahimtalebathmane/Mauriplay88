@@ -37,7 +37,8 @@ export const MyPurchases = () => {
 
       if (error) throw error;
 
-      const ordersWithDetails: OrderWithDetails[] = (data || []).map((order: any) => ({
+      const rawOrders = Array.isArray(data) ? data : [];
+      const ordersWithDetails: OrderWithDetails[] = rawOrders.map((order: any) => ({
         id: order.id,
         user_id: order.user_id,
         product_id: order.product_id,
@@ -85,13 +86,16 @@ export const MyPurchases = () => {
 
       setOrders(ordersWithDetails);
     } catch (error: any) {
+      console.error('MyPurchases load error:', error);
       showToast('فشل تحميل المشتريات', 'error');
+      setOrders([]);
     } finally {
       setLoading(false);
     }
   };
 
   const subscribeToOrders = () => {
+    if (!user?.id) return () => {};
     const channel = supabase
       .channel('orders-changes')
       .on(
@@ -100,7 +104,7 @@ export const MyPurchases = () => {
           event: '*',
           schema: 'public',
           table: 'orders',
-          filter: `user_id=eq.${user?.id}`,
+          filter: `user_id=eq.${user.id}`,
         },
         () => {
           loadOrders();
@@ -288,7 +292,7 @@ export const MyPurchases = () => {
                       ) : (
                         <div className="flex flex-col items-center text-center py-10">
                           <div className={`p-4 rounded-full mb-4 ${status.bg} ${status.color}`}>
-                            <status.icon className="w-10 h-10" />
+                            <StatusIcon className="w-10 h-10" />
                           </div>
                           <h4 className={`text-xl font-black mb-2 ${status.color}`}>الطلب {status.text}</h4>
                           <p className="text-gray-400 max-w-sm">

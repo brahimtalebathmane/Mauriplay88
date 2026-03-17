@@ -24,7 +24,11 @@ export const Wallet = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user?.wallet_active) {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+    if (user.wallet_active) {
       loadTransactions();
     } else {
       setLoading(false);
@@ -32,15 +36,20 @@ export const Wallet = () => {
   }, [user]);
 
   const loadTransactions = async () => {
-    if (!user?.phone_number) return;
+    if (!user?.phone_number) {
+      setLoading(false);
+      return;
+    }
     try {
       const { data, error } = await supabase.rpc('get_wallet_transactions', {
         p_phone_number: user.phone_number,
       });
       if (error) throw error;
-      setTransactions(data || []);
+      setTransactions(Array.isArray(data) ? data : []);
     } catch (error: any) {
+      console.error('Wallet transactions load error:', error);
       showToast('فشل تحميل سجل المعاملات', 'error');
+      setTransactions([]);
     } finally {
       setLoading(false);
     }

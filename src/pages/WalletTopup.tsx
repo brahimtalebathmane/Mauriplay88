@@ -67,15 +67,16 @@ export const WalletTopup = () => {
 
       if (error) throw error;
 
-      setPaymentMethods(data || []);
+      const methods = Array.isArray(data) ? data : [];
+      setPaymentMethods(methods);
 
-      // Auto-select first payment method if available
-      if (data && data.length > 0) {
-        setSelectedPaymentMethod(data[0].id);
+      if (methods.length > 0) {
+        setSelectedPaymentMethod(methods[0].id);
       }
     } catch (error) {
       console.error('Failed to load payment methods:', error);
       showToast('فشل تحميل طرق الدفع', 'error');
+      setPaymentMethods([]);
     } finally {
       setLoadingPaymentMethods(false);
     }
