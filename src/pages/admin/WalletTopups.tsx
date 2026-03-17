@@ -154,14 +154,15 @@ export const WalletTopups = () => {
 
       if (error) throw error;
 
-      if (data.success) {
+      const result = data as { success?: boolean; message?: string } | null;
+      if (result?.success) {
         showToast('تمت الموافقة على طلب الشحن', 'success');
         loadTopups();
       } else {
-        showToast(data.message, 'error');
+        showToast(result?.message || 'فشلت الموافقة', 'error');
       }
     } catch (error: any) {
-      showToast('فشلت الموافقة', 'error');
+      showToast(error?.message || 'فشلت الموافقة', 'error');
     }
   };
 
@@ -177,14 +178,15 @@ export const WalletTopups = () => {
 
       if (error) throw error;
 
-      if (data.success) {
+      const result = data as { success?: boolean; message?: string } | null;
+      if (result?.success) {
         showToast('تم رفض طلب الشحن', 'success');
         loadTopups();
       } else {
-        showToast(data.message, 'error');
+        showToast(result?.message || 'فشل الرفض', 'error');
       }
     } catch (error: any) {
-      showToast('فشل الرفض', 'error');
+      showToast(error?.message || 'فشل الرفض', 'error');
     }
   };
 
