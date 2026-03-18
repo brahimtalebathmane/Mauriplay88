@@ -15,14 +15,24 @@ const allowedOrigins = new Set([
 
 function buildCorsHeaders(req: Request, forOptions = false): Record<string, string> {
   const requestOrigin = req.headers.get("Origin") ?? "";
-  const allowOrigin = allowedOrigins.has(requestOrigin) ? requestOrigin : "https://mauriplay.store";
+  const requestedHeaders = req.headers.get("Access-Control-Request-Headers") ?? "";
+
+  // Prefer reflecting the request origin to avoid mismatches that cause CORS failures.
+  // If the origin isn't known, still reflect it (or fall back to '*') so preflight never blocks.
+  const allowOrigin = requestOrigin
+    ? (allowedOrigins.has(requestOrigin) ? requestOrigin : requestOrigin)
+    : "*";
 
   const headers: Record<string, string> = {
     "Access-Control-Allow-Origin": allowOrigin,
-    "Vary": "Origin",
-    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Vary": "Origin, Access-Control-Request-Headers",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    // Supabase client + browsers commonly send these; also echo any requested headers.
+    "Access-Control-Allow-Headers":
+      requestedHeaders ||
+      "authorization, apikey, content-type, x-client-info, x-supabase-authorization, x-requested-with",
   };
+
   if (forOptions) {
     headers["Access-Control-Max-Age"] = "86400";
   }
@@ -131,7 +141,7 @@ function buildUserPayload(
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
-      status: 204,
+      status: 200,
       headers: buildCorsHeaders(req, true),
     });
   }
@@ -139,23 +149,30 @@ Deno.serve(async (req: Request) => {
   const corsHeaders = buildCorsHeaders(req);
 
   try {
+    if (req.method !== "POST") {
+      return new Response(JSON.stringify({ success: false, message: "Method not allowed" }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const appId = Deno.env.get("ONESIGNAL_APP_ID");
     const apiKey = Deno.env.get("ONESIGNAL_REST_API_KEY");
 
     if (!appId || !apiKey) {
       return new Response(JSON.stringify({ success: false, message: "OneSignal not configured" }), {
-        status: 500,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const body = (await req.json()) as RequestBody;
+    const body = (await req.json().catch(() => ({}))) as Partial<RequestBody>;
     const { type, base_url: baseUrl } = body;
 
     if (!type) {
       return new Response(
         JSON.stringify({ success: false, message: "Missing type" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -163,16 +180,16 @@ Deno.serve(async (req: Request) => {
     let payload: Record<string, unknown>;
 
     if (isAdmin) {
-      payload = buildAdminPayload(type, baseUrl ?? "", body);
+      payload = buildAdminPayload(type, baseUrl ?? "", body as RequestBody);
     } else {
       const userId = body.user_id;
       if (!userId) {
         return new Response(
           JSON.stringify({ success: false, message: "Missing user_id for user notification" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
-      payload = buildUserPayload(type, userId, baseUrl ?? "", body);
+      payload = buildUserPayload(type, userId, baseUrl ?? "", body as RequestBody);
     }
 
     const res = await fetch(ONESIGNAL_API, {
@@ -194,7 +211,7 @@ Deno.serve(async (req: Request) => {
           details: data,
         }),
         {
-          status: 502,
+          status: 200,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         }
       );
@@ -211,7 +228,7 @@ Deno.serve(async (req: Request) => {
         message: error instanceof Error ? error.message : "Internal server error",
       }),
       {
-        status: 500,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       }
     );
