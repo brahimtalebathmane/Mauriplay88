@@ -35,19 +35,16 @@ export class ErrorBoundary extends Component<Props, State> {
     // Clear all caches and reload
     if ('caches' in window) {
       caches.keys().then((names) => {
-        names.forEach((name) => {
-          caches.delete(name);
-        });
-      });
+        names.forEach((name) => caches.delete(name));
+      }).catch(() => {});
     }
 
-    // Clear service worker and reload
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.getRegistrations().then((registrations) => {
-        registrations.forEach((registration) => {
-          registration.unregister();
-        });
+        return Promise.all(registrations.map((r) => r.unregister()));
       }).then(() => {
+        window.location.href = '/';
+      }).catch(() => {
         window.location.href = '/';
       });
     } else {

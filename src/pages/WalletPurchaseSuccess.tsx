@@ -24,7 +24,10 @@ export const WalletPurchaseSuccess = () => {
   useEffect(() => {
     if (!state?.code) {
       navigate('/my-purchases', { replace: true });
+      return;
     }
+    document.title = 'تم الشراء بنجاح | MauriPlay';
+    return () => { document.title = 'MauriPlay'; };
   }, [state, navigate]);
 
   const copyCode = () => {

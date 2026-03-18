@@ -74,7 +74,7 @@ export const MyPurchases = () => {
         },
         platform: {
           id: order.platform_id || '',
-          name: order.platform_name || 'منصة محذ/وفة',
+          name: order.platform_name || 'منصة محذوفة',
           logo_url: order.platform_logo_url || '/icon-72.png',
           website_url: order.platform_website_url || '',
           tutorial_video_url: order.platform_tutorial_video_url || '',

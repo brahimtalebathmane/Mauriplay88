@@ -85,6 +85,7 @@ self.addEventListener('fetch', (event) => {
         .catch(() => caches.match(request).then((cached) => cached || caches.match('/offline.html')))
         .then((response) => response || caches.match('/offline.html'))
         .catch(() => caches.match('/offline.html'))
+        .then((response) => response || new Response('Offline', { status: 503, statusText: 'Service Unavailable' }))
     );
     return;
   }

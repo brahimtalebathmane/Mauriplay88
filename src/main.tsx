@@ -83,7 +83,7 @@ function AppLifecycle({ children }: { children: React.ReactNode }) {
               }
             });
           }
-        });
+        }).catch(() => {});
       }
     };
 
