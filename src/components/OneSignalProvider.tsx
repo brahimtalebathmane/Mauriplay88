@@ -28,6 +28,7 @@ export function OneSignalProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoggedIn } = useStore();
   const navigate = useNavigate();
   const clickHandlerRef = useRef<((event: { notification: { data?: Record<string, string> } }) => void) | null>(null);
+  const wasLoggedInRef = useRef<boolean>(false);
 
   // OneSignal identity: set external id and role tag when user logs in, clear when they log out
   useEffect(() => {
@@ -43,14 +44,20 @@ export function OneSignalProvider({ children }: { children: React.ReactNode }) {
           console.warn('[OneSignal] Login/tag failed:', e);
         }
       });
+      wasLoggedInRef.current = true;
     } else {
-      deferred.push(async (OneSignal: OneSignalApi) => {
-        try {
-          await OneSignal.logout();
-        } catch (e) {
-          console.warn('[OneSignal] Logout failed:', e);
-        }
-      });
+      // Avoid calling logout on initial page load (common when OneSignal init fails due to
+      // browser storage restrictions like IndexedDB being unavailable).
+      if (wasLoggedInRef.current) {
+        deferred.push(async (OneSignal: OneSignalApi) => {
+          try {
+            await OneSignal.logout();
+          } catch (e) {
+            console.warn('[OneSignal] Logout failed:', e);
+          }
+        });
+      }
+      wasLoggedInRef.current = false;
     }
   }, [isLoggedIn, user?.id, user?.role]);
 
