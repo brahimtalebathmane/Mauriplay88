@@ -35,12 +35,12 @@ export function OneSignalProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const deferred = window.OneSignalDeferred;
     if (!deferred) return;
-    if (window.__oneSignalInitOk === false) return;
+    if (window.__oneSignalInitOk !== true) return;
 
     if (isLoggedIn && user?.id) {
       deferred.push(async (OneSignal: OneSignalApi) => {
         try {
-          if (window.__oneSignalInitOk === false) return;
+          if (window.__oneSignalInitOk !== true) return;
           await OneSignal.login(user.id);
           await OneSignal.User.addTags({ role: user.role });
         } catch (e) {
@@ -54,7 +54,7 @@ export function OneSignalProvider({ children }: { children: React.ReactNode }) {
       if (wasLoggedInRef.current) {
         deferred.push(async (OneSignal: OneSignalApi) => {
           try {
-            if (window.__oneSignalInitOk === false) return;
+            if (window.__oneSignalInitOk !== true) return;
             await OneSignal.logout();
           } catch (e) {
             console.warn('[OneSignal] Logout failed:', e);

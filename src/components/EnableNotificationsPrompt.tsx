@@ -58,7 +58,7 @@ export function EnableNotificationsPrompt() {
         const t = setTimeout(() => {
           window.OneSignalDeferred!.push(async (OneSignal: OneSignalApi) => {
             try {
-              if (window.__oneSignalInitOk === false) return;
+              if (window.__oneSignalInitOk !== true) return;
               if (OneSignal?.Slidedown?.promptPush) OneSignal.Slidedown.promptPush();
             } catch {
               // ignore
@@ -81,7 +81,7 @@ export function EnableNotificationsPrompt() {
     if (deferredQueue) {
       deferredQueue.push(async (OneSignal: OneSignalApi) => {
         try {
-          if (window.__oneSignalInitOk === false) return;
+          if (window.__oneSignalInitOk !== true) return;
           if (OneSignal?.Slidedown?.promptPush) {
             OneSignal.Slidedown.promptPush();
             return;

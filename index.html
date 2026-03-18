@@ -25,6 +25,8 @@
     <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
     <script>
       window.OneSignalDeferred = window.OneSignalDeferred || [];
+      // Fail-closed: only allow app code to call OneSignal APIs after init succeeds.
+      window.__oneSignalInitOk = false;
       OneSignalDeferred.push(async function(OneSignal) {
         try {
           await OneSignal.init({
