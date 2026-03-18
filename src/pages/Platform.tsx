@@ -5,6 +5,7 @@ import { BottomNav } from '../components/BottomNav';
 import { supabase } from '../lib/supabase';
 import type { Platform, ProductWithStock } from '../types';
 import { showToast } from '../components/Toast';
+import { ProductLogo } from '../components/ProductLogo';
 import { ArrowRight } from 'lucide-react';
 
 export const PlatformPage = () => {
@@ -199,14 +200,14 @@ export const PlatformPage = () => {
                     </div>
                   </div>
 
-                  {/* أيقونة المنتج أو الحرف الأول */}
+                  {/* شعار المنتج أو صورة افتراضية */}
                   <div className="flex-shrink-0">
-                    <div className="w-14 h-14 bg-gray-900 rounded-xl border border-white/5 flex items-center justify-center overflow-hidden">
-                      {product.product_logo_url ? (
-                        <img src={product.product_logo_url} alt="" className="w-full h-full object-contain p-2" onError={(e) => { (e.target as HTMLImageElement).src = '/icon-72.png'; }} />
-                      ) : (
-                        <span className="text-xl font-black text-gray-700">{product.name.charAt(0)}</span>
-                      )}
+                    <div className="w-14 h-14 bg-gray-900 rounded-xl border border-white/5 flex items-center justify-center overflow-hidden p-2">
+                      <ProductLogo
+                        logoUrl={product.product_logo_url ?? product.logo_url}
+                        name={product.name}
+                        className="w-full h-full object-contain"
+                      />
                     </div>
                   </div>
                 </div>

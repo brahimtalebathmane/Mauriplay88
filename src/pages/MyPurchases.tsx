@@ -8,6 +8,7 @@ import { supabase } from '../lib/supabase';
 import { useStore } from '../store/useStore';
 import type { OrderWithDetails, InventoryStatus } from '../types';
 import { showToast } from '../components/Toast';
+import { ProductLogo } from '../components/ProductLogo';
 import { Copy, CheckCircle, Clock, XCircle, ChevronDown, ChevronUp, ExternalLink, Video, Ticket, ArrowRight } from 'lucide-react';
 
 export const MyPurchases = () => {
@@ -60,6 +61,8 @@ export const MyPurchases = () => {
           platform_id: order.platform_id || '',
           name: order.product_name || 'منتج محذوف',
           price_mru: order.product_price || 0,
+          product_logo_url: order.product_logo_url ?? undefined,
+          logo_url: order.product_logo_url ?? undefined,
           is_deleted: !order.product_name,
           created_at: '',
           updated_at: ''
@@ -193,12 +196,13 @@ export const MyPurchases = () => {
                       <div className="flex items-center gap-5">
                         <div className="relative">
                            <div className="absolute inset-0 bg-cyan-500/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
-                           <img
-                            src={order.platform?.logo_url || '/icon-72.png'}
-                            className="relative w-16 h-16 object-contain bg-black border border-white/10 rounded-2xl p-2"
-                            alt=""
-                            onError={(e) => { (e.target as HTMLImageElement).src = '/icon-72.png'; }}
-                          />
+                           <div className="relative w-16 h-16 bg-black border border-white/10 rounded-2xl p-2 flex items-center justify-center overflow-hidden">
+                             <ProductLogo
+                               logoUrl={order.product?.product_logo_url ?? order.product?.logo_url}
+                               name={order.product?.name}
+                               className="w-full h-full object-contain"
+                             />
+                           </div>
                         </div>
                         <div>
                           <h3 className="text-xl font-black text-gray-100 group-hover:text-white transition-colors">

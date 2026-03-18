@@ -33,7 +33,9 @@ export interface Product {
   platform_id: string;
   name: string;
   price_mru: number;
+  /** Product logo URL (preferred). DB may also expose logo_url. */
   product_logo_url?: string;
+  logo_url?: string;
   is_deleted: boolean;
   created_at: string;
   updated_at: string;
