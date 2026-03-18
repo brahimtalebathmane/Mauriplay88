@@ -15,22 +15,15 @@ const allowedOrigins = new Set([
 
 function buildCorsHeaders(req: Request, forOptions = false): Record<string, string> {
   const requestOrigin = req.headers.get("Origin") ?? "";
-  const requestedHeaders = req.headers.get("Access-Control-Request-Headers") ?? "";
-
-  // Prefer reflecting the request origin to avoid mismatches that cause CORS failures.
-  // If the origin isn't known, still reflect it (or fall back to '*') so preflight never blocks.
-  const allowOrigin = requestOrigin
-    ? (allowedOrigins.has(requestOrigin) ? requestOrigin : requestOrigin)
-    : "*";
+  const allowOrigin = allowedOrigins.has(requestOrigin)
+    ? requestOrigin
+    : "https://mauriplay.store";
 
   const headers: Record<string, string> = {
     "Access-Control-Allow-Origin": allowOrigin,
-    "Vary": "Origin, Access-Control-Request-Headers",
+    "Vary": "Origin",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    // Supabase client + browsers commonly send these; also echo any requested headers.
-    "Access-Control-Allow-Headers":
-      requestedHeaders ||
-      "authorization, apikey, content-type, x-client-info, x-supabase-authorization, x-requested-with",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   };
 
   if (forOptions) {
@@ -140,7 +133,7 @@ function buildUserPayload(
 
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, {
+    return new Response("ok", {
       status: 200,
       headers: buildCorsHeaders(req, true),
     });
