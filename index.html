@@ -59,43 +59,6 @@
     <meta property="og:type" content="website" />
 
     <script>
-      // Service Worker registration with update handling
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then(registration => {
-              console.log('[SW] Service worker registered');
-
-              // Check for updates periodically
-              setInterval(() => {
-                registration.update();
-              }, 60000); // Check every minute
-
-              // Handle updates
-              registration.addEventListener('updatefound', () => {
-                const newWorker = registration.installing;
-                if (newWorker) {
-                  newWorker.addEventListener('statechange', () => {
-                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                      console.log('[SW] New version available');
-                      // Optionally notify user or auto-reload
-                    }
-                  });
-                }
-              });
-            })
-            .catch(err => {
-              console.error('[SW] Registration failed:', err);
-            });
-
-          // Handle controller change (new SW activated)
-          navigator.serviceWorker.addEventListener('controllerchange', () => {
-            // Avoid reloading mid-interaction; the user can refresh after the current flow.
-            console.log('[SW] New service worker activated');
-          });
-        });
-      }
-
       // Prevent white screen by detecting stuck states
       window.addEventListener('load', () => {
         // If root element is empty after 5 seconds, something went wrong

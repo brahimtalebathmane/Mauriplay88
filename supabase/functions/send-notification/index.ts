@@ -4,12 +4,26 @@
  * Requires: ONESIGNAL_APP_ID, ONESIGNAL_REST_API_KEY (Supabase secrets).
  */
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Max-Age": "86400",
-};
+const allowedOrigins = new Set([
+  "https://mauriplay.store",
+  "https://www.mauriplay.store",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:4173",
+  "http://127.0.0.1:4173",
+]);
+
+function buildCorsHeaders(req: Request): Record<string, string> {
+  const requestOrigin = req.headers.get("Origin") ?? "";
+  const allowOrigin = allowedOrigins.has(requestOrigin) ? requestOrigin : "https://mauriplay.store";
+
+  return {
+    "Access-Control-Allow-Origin": allowOrigin,
+    "Vary": "Origin",
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+}
 
 type NotificationType =
   | "new_order_admin"
@@ -111,8 +125,13 @@ function buildUserPayload(
 }
 
 Deno.serve(async (req: Request) => {
+  const corsHeaders = buildCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return new Response(null, {
+      status: 204,
+      headers: corsHeaders,
+    });
   }
 
   try {
@@ -120,10 +139,10 @@ Deno.serve(async (req: Request) => {
     const apiKey = Deno.env.get("ONESIGNAL_REST_API_KEY");
 
     if (!appId || !apiKey) {
-      return new Response(
-        JSON.stringify({ success: false, message: "OneSignal not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ success: false, message: "OneSignal not configured" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const body = (await req.json()) as RequestBody;
@@ -132,7 +151,7 @@ Deno.serve(async (req: Request) => {
     if (!type) {
       return new Response(
         JSON.stringify({ success: false, message: "Missing type" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
@@ -146,7 +165,7 @@ Deno.serve(async (req: Request) => {
       if (!userId) {
         return new Response(
           JSON.stringify({ success: false, message: "Missing user_id for user notification" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
       payload = buildUserPayload(type, userId, baseUrl ?? "", body);

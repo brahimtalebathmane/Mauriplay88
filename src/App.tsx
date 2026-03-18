@@ -3,6 +3,7 @@ import { useStore } from './store/useStore';
 import { ToastContainer } from './components/Toast';
 import { SupportButton } from './components/SupportButton';
 import { OneSignalProvider } from './components/OneSignalProvider';
+import { EnableNotificationsPrompt } from './components/EnableNotificationsPrompt';
 
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -51,6 +52,7 @@ function App() {
       <OneSignalProvider>
         <ToastContainer />
         <SupportButton />
+        <EnableNotificationsPrompt />
         <Routes>
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
