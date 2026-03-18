@@ -7,6 +7,7 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { PhoneInput } from '../components/PhoneInput';
 import { showToast } from '../components/Toast';
+import { BottomNav } from '../components/BottomNav';
 import { ArrowRight, Upload, X, CheckCircle, Clock, XCircle } from 'lucide-react';
 
 interface PaymentMethod {
@@ -527,6 +528,7 @@ export const WalletTopup = () => {
           )}
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
+import { BottomNav } from '../components/BottomNav';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { supabase } from '../lib/supabase';
 import type { OrderWithDetails, InventoryStatus } from '../types';
@@ -95,7 +96,7 @@ export const OrderSuccess = () => {
   const isApproved = order.status === 'approved';
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#050505] text-white pb-20">
       <Header />
 
       <div className="max-w-2xl mx-auto px-4 py-12 flex flex-col items-center">
@@ -225,6 +226,7 @@ export const OrderSuccess = () => {
           </button>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 };

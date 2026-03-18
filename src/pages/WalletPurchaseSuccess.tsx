@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Header } from '../components/Header';
+import { BottomNav } from '../components/BottomNav';
 import { Copy, CheckCircle, ExternalLink, PlayCircle, Check } from 'lucide-react';
 import { showToast } from '../components/Toast';
 import { supabase } from '../lib/supabase';
@@ -83,7 +84,7 @@ export const WalletPurchaseSuccess = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#050505] text-white pb-20">
       <Header />
 
       <div className="max-w-2xl mx-auto px-4 py-12 flex flex-col items-center">
@@ -162,6 +163,7 @@ export const WalletPurchaseSuccess = () => {
           تم
         </button>
       </div>
+      <BottomNav />
     </div>
   );
 };

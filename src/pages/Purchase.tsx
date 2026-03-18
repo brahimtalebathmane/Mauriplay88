@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
+import { BottomNav } from '../components/BottomNav';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { LoadingScreen } from '../components/LoadingScreen';
@@ -200,7 +201,7 @@ export const Purchase = () => {
   const hasBalance = (user?.wallet_balance || 0) >= product.price_mru;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#050505] text-white pb-20">
         <Header />
         <div className="max-w-2xl mx-auto px-4 pt-24 pb-12">
 
@@ -414,6 +415,7 @@ export const Purchase = () => {
           </div>
         )}
         </div>
+      <BottomNav />
       </div>
   );
 };

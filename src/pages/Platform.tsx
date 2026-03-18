@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
+import { BottomNav } from '../components/BottomNav';
 import { supabase } from '../lib/supabase';
 import type { Platform, ProductWithStock } from '../types';
 import { showToast } from '../components/Toast';
@@ -79,18 +80,19 @@ export const PlatformPage = () => {
 
   if (!platform && !loading) {
     return (
-      <div className="min-h-screen bg-[#050505]">
+      <div className="min-h-screen bg-[#050505] pb-20">
         <Header />
         <div className="flex flex-col items-center justify-center h-64 gap-4">
           <div className="text-gray-400 text-xl font-medium animate-pulse">المنصة غير موجودة</div>
           <button onClick={() => navigate('/')} className="text-cyan-500 hover:underline">العودة للرئيسية</button>
         </div>
+        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-cyan-500/30">
+    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-cyan-500/30 pb-20">
       <Header />
 
       {/* Back button */}
@@ -217,6 +219,7 @@ export const PlatformPage = () => {
           )}
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 };
