@@ -10,6 +10,7 @@ import { useStore } from '../store/useStore';
 declare global {
   interface Window {
     OneSignalDeferred?: Array<(OneSignal: OneSignalApi) => void>;
+    __oneSignalInitOk?: boolean;
   }
 }
 
@@ -34,10 +35,12 @@ export function OneSignalProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const deferred = window.OneSignalDeferred;
     if (!deferred) return;
+    if (window.__oneSignalInitOk === false) return;
 
     if (isLoggedIn && user?.id) {
       deferred.push(async (OneSignal: OneSignalApi) => {
         try {
+          if (window.__oneSignalInitOk === false) return;
           await OneSignal.login(user.id);
           await OneSignal.User.addTags({ role: user.role });
         } catch (e) {
@@ -51,6 +54,7 @@ export function OneSignalProvider({ children }: { children: React.ReactNode }) {
       if (wasLoggedInRef.current) {
         deferred.push(async (OneSignal: OneSignalApi) => {
           try {
+            if (window.__oneSignalInitOk === false) return;
             await OneSignal.logout();
           } catch (e) {
             console.warn('[OneSignal] Logout failed:', e);

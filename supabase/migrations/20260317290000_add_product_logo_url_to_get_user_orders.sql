@@ -1,6 +1,10 @@
 -- Add product_logo_url to get_user_orders_with_inventory so My Purchases can show product logos.
 -- Uses COALESCE(p.product_logo_url, p.logo_url) to support both columns.
 
+-- PostgreSQL cannot change a function's RETURNS TABLE shape via CREATE OR REPLACE.
+-- Drop first to avoid SQLSTATE 42P13 when return columns differ.
+DROP FUNCTION IF EXISTS get_user_orders_with_inventory(uuid);
+
 CREATE OR REPLACE FUNCTION get_user_orders_with_inventory(p_user_id uuid)
 RETURNS TABLE (
   id uuid,
