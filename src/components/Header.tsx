@@ -94,6 +94,16 @@ export const Header = () => {
 
                 <button
                   onClick={() => {
+                    navigate('/terms-and-conditions');
+                    setMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-end gap-3 px-4 py-3 text-white hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  <span>الشروط والأحكام</span>
+                </button>
+
+                <button
+                  onClick={() => {
                     window.open('https://wa.me/22249827331', '_blank');
                     setMenuOpen(false);
                   }}

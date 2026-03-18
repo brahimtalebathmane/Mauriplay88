@@ -16,6 +16,7 @@ import { Profile } from './pages/Profile';
 import { Wallet } from './pages/Wallet';
 import { WalletTopup } from './pages/WalletTopup';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { TermsAndConditions } from './pages/TermsAndConditions';
 import { AdminDashboard } from './pages/admin/Dashboard';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -52,6 +53,7 @@ function App() {
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
 
         <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/platform/:id" element={<ProtectedRoute><PlatformPage /></ProtectedRoute>} />
