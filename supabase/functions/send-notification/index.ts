@@ -4,20 +4,10 @@
  * Requires: ONESIGNAL_APP_ID, ONESIGNAL_REST_API_KEY (Supabase secrets).
  */
 
-const allowedOrigins = new Set([
-  "https://mauriplay.store",
-  "https://www.mauriplay.store",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:4173",
-  "http://127.0.0.1:4173",
-]);
+const ALLOW_ORIGIN = "https://mauriplay.store";
 
-function buildCorsHeaders(req: Request, forOptions = false): Record<string, string> {
-  const requestOrigin = req.headers.get("Origin") ?? "";
-  const allowOrigin = allowedOrigins.has(requestOrigin)
-    ? requestOrigin
-    : "https://mauriplay.store";
+function buildCorsHeaders(_req: Request, forOptions = false): Record<string, string> {
+  const allowOrigin = ALLOW_ORIGIN;
 
   const headers: Record<string, string> = {
     "Access-Control-Allow-Origin": allowOrigin,
