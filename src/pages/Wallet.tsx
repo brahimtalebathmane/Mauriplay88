@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../store/useStore';
 import { Header } from '../components/Header';
+import { BottomNav } from '../components/BottomNav';
 import { showToast } from '../components/Toast';
 import { Wallet as WalletIcon, ArrowDownRight, ArrowUpLeft, MessageCircle, Clock, ShieldCheck, Plus, ArrowRight } from 'lucide-react';
 import { Button } from '../components/Button';
@@ -102,7 +103,7 @@ export const Wallet = () => {
 
   if (!user?.wallet_active) {
     return (
-      <div className="min-h-screen bg-[#050505]">
+      <div className="min-h-screen bg-[#050505] pb-20">
         <Header />
         <div className="pt-24 px-4 pb-8 flex items-center justify-center min-h-[80vh]">
           <div className="max-w-md w-full text-center">
@@ -126,12 +127,13 @@ export const Wallet = () => {
             </Button>
           </div>
         </div>
+        <BottomNav />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#050505] text-white pb-20">
       <Header />
       <div className="pt-24 px-4 pb-12">
         <div className="max-w-2xl mx-auto">
@@ -247,6 +249,7 @@ export const Wallet = () => {
           </p>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 };

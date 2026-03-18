@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
+import { BottomNav } from '../components/BottomNav';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../store/useStore';
 import type { Platform } from '../types';
@@ -105,7 +106,7 @@ export const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#050505] text-white pb-20">
       <Header />
 
       <div className="pt-20 px-4 max-w-6xl mx-auto pb-10">
@@ -241,6 +242,7 @@ export const Home = () => {
           </div>
         )}
       </div>
+      <BottomNav />
     </div>
   );
 };

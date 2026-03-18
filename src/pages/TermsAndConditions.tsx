@@ -1,11 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, FileText, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
+import { BottomNav } from '../components/BottomNav';
 
 export const TermsAndConditions = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#050505] text-white pb-20">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <button
           onClick={() => navigate(-1)}
@@ -122,6 +123,7 @@ export const TermsAndConditions = () => {
           </p>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../store/useStore';
 import { Header } from '../components/Header';
+import { BottomNav } from '../components/BottomNav';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { showToast } from '../components/Toast';
@@ -63,7 +64,7 @@ export const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#050505] text-white pb-20">
       <Header />
 
       <div className="pt-24 px-4 pb-12">
@@ -237,6 +238,7 @@ export const Profile = () => {
           </div>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 };

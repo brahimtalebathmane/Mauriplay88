@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
+import { BottomNav } from '../components/BottomNav';
 import { SkeletonList } from '../components/LoadingScreen';
 import { Button } from '../components/Button';
 import { supabase } from '../lib/supabase';
@@ -138,7 +139,7 @@ export const MyPurchases = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-cyan-500/30">
+    <div className="min-h-screen bg-[#050505] text-white selection:bg-cyan-500/30 pb-20">
       <Header />
       <div className="max-w-4xl mx-auto px-4 py-12">
 
@@ -311,6 +312,7 @@ export const MyPurchases = () => {
           </div>
         )}
       </div>
+      <BottomNav />
     </div>
   );
 };
