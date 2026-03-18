@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
-import { Menu, User, LogOut, Home, ShoppingBag, Wallet, X } from 'lucide-react';
+import { Menu, User, LogOut, Home, ShoppingBag, Wallet, X, MessageCircle } from 'lucide-react';
 import { useState } from 'react';
 
 export const Header = () => {
@@ -91,6 +91,17 @@ export const Header = () => {
                     <Wallet className="w-5 h-5" />
                   </button>
                 )}
+
+                <button
+                  onClick={() => {
+                    window.open('https://wa.me/22249827331', '_blank');
+                    setMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-end gap-3 px-4 py-3 text-white hover:bg-gray-800 rounded-lg transition-colors"
+                >
+                  <span>الدعم</span>
+                  <MessageCircle className="w-5 h-5" />
+                </button>
 
                 <button
                   onClick={() => {

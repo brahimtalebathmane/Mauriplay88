@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useStore } from './store/useStore';
 import { ToastContainer } from './components/Toast';
+import { SupportButton } from './components/SupportButton';
 
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -45,6 +46,7 @@ function App() {
   return (
     <BrowserRouter>
       <ToastContainer />
+      <SupportButton />
       <Routes>
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
