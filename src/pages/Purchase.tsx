@@ -92,7 +92,8 @@ export const Purchase = () => {
         }).catch(() => {});
 
         showToast('تمت عملية الشراء بنجاح', 'success');
-        navigate('/wallet-purchase-success', {
+        const successUrl = `/wallet-purchase-success?order=${data.order_id}`;
+        navigate(successUrl, {
           replace: true,
           state: {
             code: data.code,
