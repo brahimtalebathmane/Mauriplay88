@@ -4,6 +4,7 @@ import { useStore } from '../../store/useStore';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { showToast } from '../../components/Toast';
+import { notifyUserWalletActivated } from '../../utils/notifications';
 import { Copy, Wallet, Ban, CreditCard as Edit2, Save, X } from 'lucide-react';
 
 export const Users = () => {
@@ -83,6 +84,7 @@ export const Users = () => {
       if (error) throw error;
       const result = data as { success?: boolean; message?: string };
       if (result?.success) {
+        if (!_currentStatus) notifyUserWalletActivated(userId);
         showToast(result.message || 'تم التحديث', 'success');
         await loadUsers();
       } else {

@@ -4,6 +4,7 @@ import { useStore } from '../../store/useStore';
 import { Button } from '../../components/Button';
 import { SkeletonList } from '../../components/LoadingScreen';
 import { showToast } from '../../components/Toast';
+import { notifyUserOrderApproved } from '../../utils/notifications';
 import { CheckCircle, XCircle, Eye } from 'lucide-react';
 
 export const Orders = () => {
@@ -99,6 +100,8 @@ export const Orders = () => {
 
       const result = data as { success?: boolean; message?: string } | null;
       if (result?.success) {
+        const orderRow = orders.find((o) => o.id === orderId);
+        if (orderRow?.user_id) notifyUserOrderApproved(orderRow.user_id);
         showToast('تمت الموافقة على الطلب', 'success');
         loadOrders();
       } else {

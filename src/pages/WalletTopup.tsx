@@ -7,6 +7,7 @@ import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { PhoneInput } from '../components/PhoneInput';
 import { showToast } from '../components/Toast';
+import { notifyAdminNewTopup } from '../utils/notifications';
 import { BottomNav } from '../components/BottomNav';
 import { ArrowRight, Upload, X, CheckCircle, Clock, XCircle } from 'lucide-react';
 
@@ -211,6 +212,9 @@ export const WalletTopup = () => {
         showToast(data?.message || 'فشل إرسال طلب الشحن', 'error');
         return;
       }
+
+      const topupId = (data as { topup?: { id?: string } })?.topup?.id;
+      if (topupId) notifyAdminNewTopup(topupId);
 
       showToast('تم إرسال طلب الشحن بنجاح. سيتم مراجعته من قبل الإدارة.', 'success');
 

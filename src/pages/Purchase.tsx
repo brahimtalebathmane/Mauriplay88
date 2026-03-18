@@ -10,6 +10,7 @@ import { useStore } from '../store/useStore';
 import type { Product, PaymentMethod } from '../types';
 import { showToast } from '../components/Toast';
 import { logger } from '../utils/logger';
+import { notifyAdminNewOrder, notifyUserPurchaseSuccess } from '../utils/notifications';
 import { ProductLogo } from '../components/ProductLogo';
 import { Wallet, CreditCard, Upload, X, CheckCircle2, AlertCircle, ShieldCheck, ArrowRight, MessageCircle } from 'lucide-react';
 
@@ -93,6 +94,9 @@ export const Purchase = () => {
           }
         }).catch(() => {});
 
+        notifyAdminNewOrder(data.order_id);
+        notifyUserPurchaseSuccess(user.id, data.order_id, data.product_name);
+
         showToast('تمت عملية الشراء بنجاح', 'success');
         const successUrl = `/wallet-purchase-success?order=${data.order_id}`;
         navigate(successUrl, {
@@ -148,6 +152,7 @@ export const Purchase = () => {
 
       if (data.success) {
         await uploadReceipt(data.order_id);
+        notifyAdminNewOrder(data.order_id);
         showToast('تم إنشاء الطلب بنجاح. يرجى انتظار الموافقة', 'success');
         navigate('/my-purchases');
       } else {

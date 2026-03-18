@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useStore } from './store/useStore';
 import { ToastContainer } from './components/Toast';
 import { SupportButton } from './components/SupportButton';
+import { OneSignalProvider } from './components/OneSignalProvider';
 
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
@@ -47,9 +48,10 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   return (
     <BrowserRouter>
-      <ToastContainer />
-      <SupportButton />
-      <Routes>
+      <OneSignalProvider>
+        <ToastContainer />
+        <SupportButton />
+        <Routes>
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
@@ -71,6 +73,7 @@ function App() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </OneSignalProvider>
     </BrowserRouter>
   );
 }

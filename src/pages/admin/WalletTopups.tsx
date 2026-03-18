@@ -4,6 +4,7 @@ import { useStore } from '../../store/useStore';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { showToast } from '../../components/Toast';
+import { notifyUserTopupApproved } from '../../utils/notifications';
 import { CheckCircle, XCircle, Eye, Search, CreditCard as Edit2, Save, X } from 'lucide-react';
 
 interface WalletTopup {
@@ -162,6 +163,8 @@ export const WalletTopups = () => {
 
       const result = data as { success?: boolean; message?: string } | null;
       if (result?.success) {
+        const topup = topups.find((t) => t.id === topupId);
+        if (topup?.user_id) notifyUserTopupApproved(topup.user_id, topup.amount);
         showToast('تمت الموافقة على طلب الشحن', 'success');
         loadTopups();
       } else {
