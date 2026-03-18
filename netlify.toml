@@ -27,3 +27,10 @@
     Content-Type = "application/javascript"
     Cache-Control = "public, max-age=0, must-revalidate"
     Service-Worker-Allowed = "/"
+
+[[headers]]
+  for = "/OneSignalSDK.sw.js"
+  [headers.values]
+    Content-Type = "application/javascript"
+    Cache-Control = "public, max-age=0, must-revalidate"
+    Service-Worker-Allowed = "/"
