@@ -88,11 +88,13 @@ export const Purchase = () => {
         });
 
         updateWalletBalance(user.wallet_balance - product.price_mru);
-        supabase.rpc('get_user_balance', { p_user_id: user.id }).then(({ data: bal }) => {
-          if (bal?.success && typeof bal.wallet_balance === 'number') {
-            updateWalletBalance(bal.wallet_balance);
-          }
-        }).catch(() => {});
+        Promise.resolve(supabase.rpc('get_user_balance', { p_user_id: user.id }))
+          .then(({ data: bal }) => {
+            if (bal?.success && typeof bal.wallet_balance === 'number') {
+              updateWalletBalance(bal.wallet_balance);
+            }
+          })
+          .catch(() => {});
 
         notifyAdminNewOrder(data.order_id);
         notifyUserPurchaseSuccess(user.id, data.order_id, data.product_name);

@@ -1,18 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 
-declare global {
-  interface Window {
-    OneSignalDeferred?: Array<(OneSignal: OneSignalApi) => void>;
-    __oneSignalInitOk?: boolean;
-  }
-}
-
-interface OneSignalApi {
-  Slidedown?: {
-    promptPush?: () => void;
-  };
-}
-
 const STORAGE_KEY = 'mauriplay.notificationsPrompt.dismissedAt';
 const DISMISS_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -53,7 +40,8 @@ export function EnableNotificationsPrompt() {
       // On Android & iOS PWA (standalone), auto-trigger OneSignal slidedown after a short delay
       const isStandalone =
         (window.matchMedia('(display-mode: standalone)').matches) ||
-        (navigator as any).standalone === true;
+        (typeof (navigator as Navigator & { standalone?: boolean }).standalone === 'boolean' &&
+          (navigator as Navigator & { standalone?: boolean }).standalone === true);
       if (isStandalone && window.OneSignalDeferred) {
         const t = setTimeout(() => {
           window.OneSignalDeferred!.push(async (OneSignal: OneSignalApi) => {

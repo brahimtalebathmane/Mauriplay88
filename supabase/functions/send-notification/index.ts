@@ -46,7 +46,7 @@ interface RequestBody {
 
 const ONESIGNAL_API = "https://api.onesignal.com/notifications";
 
-function buildAdminPayload(type: NotificationType, baseUrl: string, body: RequestBody) {
+function buildAdminPayload(type: NotificationType, baseUrl: string) {
   const base = (baseUrl || "").replace(/\/$/, "");
   let heading_ar = "MauriPlay";
   let content_ar = "إشعار جديد";
@@ -147,6 +147,10 @@ Deno.serve(async (req: Request) => {
     const apiKey = Deno.env.get("ONESIGNAL_REST_API_KEY");
 
     if (!appId || !apiKey) {
+      console.error("[send-notification] Missing OneSignal secrets", {
+        hasAppId: Boolean(appId),
+        hasApiKey: Boolean(apiKey),
+      });
       return new Response(JSON.stringify({ success: false, message: "OneSignal not configured" }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -167,7 +171,7 @@ Deno.serve(async (req: Request) => {
     let payload: Record<string, unknown>;
 
     if (isAdmin) {
-      payload = buildAdminPayload(type, baseUrl ?? "", body as RequestBody);
+      payload = buildAdminPayload(type, baseUrl ?? "");
     } else {
       const userId = body.user_id;
       if (!userId) {
@@ -188,13 +192,28 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify(payload),
     });
 
-    const data = await res.json().catch(() => ({}));
+    const requestId = res.headers.get("x-request-id") ?? res.headers.get("x-onesignal-request-id") ?? null;
+    const rawText = await res.text().catch(() => "");
+    const data = (() => {
+      try {
+        return rawText ? JSON.parse(rawText) : {};
+      } catch {
+        return { raw: rawText };
+      }
+    })();
 
     if (!res.ok) {
+      console.error("[send-notification] OneSignal API error", {
+        status: res.status,
+        requestId,
+        details: data,
+      });
       return new Response(
         JSON.stringify({
           success: false,
           message: "OneSignal API error",
+          status: res.status,
+          request_id: requestId,
           details: data,
         }),
         {
@@ -204,11 +223,12 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    return new Response(
-      JSON.stringify({ success: true, id: data.id }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    const id = typeof (data as { id?: unknown })?.id === "string" ? (data as { id: string }).id : null;
+    return new Response(JSON.stringify({ success: true, id, status: res.status, request_id: requestId }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error: unknown) {
+    console.error("[send-notification] Unhandled error", error);
     return new Response(
       JSON.stringify({
         success: false,

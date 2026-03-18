@@ -25,15 +25,33 @@ const staticAssets = [
   '/apple-touch-icon.png',
 ];
 
+async function cacheStaticAssetsBestEffort() {
+  try {
+    const cache = await caches.open(STATIC_CACHE);
+    await Promise.all(
+      staticAssets.map(async (url) => {
+        try {
+          // add() fails the whole SW install if any one URL 404s. We intentionally ignore failures.
+          await cache.add(url);
+        } catch (e) {
+          console.warn('[SW] Static asset cache skipped:', url, e);
+        }
+      }),
+    );
+  } catch (e) {
+    console.warn('[SW] Static asset cache failed:', e);
+  }
+}
+
 // Install - cache only static assets
 self.addEventListener('install', (event) => {
   console.log('[SW] Installing service worker');
   self.skipWaiting();
   event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => {
-      console.log('[SW] Caching static assets');
-      return cache.addAll(staticAssets);
-    }),
+    (async () => {
+      console.log('[SW] Caching static assets (best-effort)');
+      await cacheStaticAssetsBestEffort();
+    })(),
   );
 });
 

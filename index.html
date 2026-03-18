@@ -62,18 +62,8 @@
           return;
         }
 
-        // Auto-show permission prompt for first-time visitors (Desktop, Android & iOS PWA)
-        try {
-          if (typeof Notification !== "undefined" && Notification.permission === "default") {
-            if (OneSignal.Slidedown && typeof OneSignal.Slidedown.promptPush === "function") {
-              OneSignal.Slidedown.promptPush();
-            } else if (typeof Notification.requestPermission === "function") {
-              Notification.requestPermission().catch(function() {});
-            }
-          }
-        } catch (e) {
-          console.warn("[OneSignal] Permission prompt failed", e);
-        }
+        // IMPORTANT: Don't auto-prompt for notification permission on load.
+        // iOS/Safari often requires a user gesture; prompting is handled via the in-app UI.
       });
     </script>
 

@@ -7,24 +7,6 @@ import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store/useStore';
 
-declare global {
-  interface Window {
-    OneSignalDeferred?: Array<(OneSignal: OneSignalApi) => void>;
-    __oneSignalInitOk?: boolean;
-  }
-}
-
-interface OneSignalApi {
-  login: (externalId: string) => Promise<void>;
-  logout: () => Promise<void>;
-  User: {
-    addTags: (tags: Record<string, string>) => Promise<void>;
-  };
-  Notifications: {
-    addEventListener: (event: 'click', handler: (event: { notification: { data?: Record<string, string> } }) => void) => void;
-  };
-}
-
 export function OneSignalProvider({ children }: { children: React.ReactNode }) {
   const { user, isLoggedIn } = useStore();
   const navigate = useNavigate();
@@ -41,8 +23,8 @@ export function OneSignalProvider({ children }: { children: React.ReactNode }) {
       deferred.push(async (OneSignal: OneSignalApi) => {
         try {
           if (window.__oneSignalInitOk !== true) return;
-          await OneSignal.login(user.id);
-          await OneSignal.User.addTags({ role: user.role });
+          await OneSignal.login?.(user.id);
+          await OneSignal.User?.addTags?.({ role: user.role });
         } catch (e) {
           console.warn('[OneSignal] Login/tag failed:', e);
         }
@@ -55,7 +37,7 @@ export function OneSignalProvider({ children }: { children: React.ReactNode }) {
         deferred.push(async (OneSignal: OneSignalApi) => {
           try {
             if (window.__oneSignalInitOk !== true) return;
-            await OneSignal.logout();
+            await OneSignal.logout?.();
           } catch (e) {
             console.warn('[OneSignal] Logout failed:', e);
           }
@@ -84,7 +66,7 @@ export function OneSignalProvider({ children }: { children: React.ReactNode }) {
 
     clickHandlerRef.current = handler;
     deferred.push((OneSignal: OneSignalApi) => {
-      OneSignal.Notifications.addEventListener('click', handler);
+      OneSignal.Notifications?.addEventListener?.('click', handler);
     });
   }, [navigate]);
 

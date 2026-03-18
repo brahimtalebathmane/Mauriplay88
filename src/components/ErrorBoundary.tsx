@@ -39,17 +39,9 @@ export class ErrorBoundary extends Component<Props, State> {
       }).catch(() => {});
     }
 
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        return Promise.all(registrations.map((r) => r.unregister()));
-      }).then(() => {
-        window.location.href = '/';
-      }).catch(() => {
-        window.location.href = '/';
-      });
-    } else {
-      window.location.href = '/';
-    }
+    // IMPORTANT: Do not unregister service workers here.
+    // Unregistering can remove OneSignal's SW and break background push until the user re-subscribes.
+    window.location.href = '/';
   };
 
   private handleGoHome = () => {
