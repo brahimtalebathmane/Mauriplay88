@@ -1,3 +1,4 @@
+# SPA fallback; static files in publish dir (e.g. OneSignal workers) are served first at root
 [[redirects]]
   from = "/*"
   to = "/index.html"
@@ -7,6 +8,7 @@
   command = "npm run build"
   publish = "dist"
 
+# OneSignal workers at root (public/OneSignalSDKWorker.js, OneSignalSDKUpdaterWorker.js → dist/) for background push
 [[headers]]
   for = "/manifest.json"
   [headers.values]

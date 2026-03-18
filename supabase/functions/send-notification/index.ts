@@ -13,16 +13,20 @@ const allowedOrigins = new Set([
   "http://127.0.0.1:4173",
 ]);
 
-function buildCorsHeaders(req: Request): Record<string, string> {
+function buildCorsHeaders(req: Request, forOptions = false): Record<string, string> {
   const requestOrigin = req.headers.get("Origin") ?? "";
   const allowOrigin = allowedOrigins.has(requestOrigin) ? requestOrigin : "https://mauriplay.store";
 
-  return {
+  const headers: Record<string, string> = {
     "Access-Control-Allow-Origin": allowOrigin,
     "Vary": "Origin",
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
+  if (forOptions) {
+    headers["Access-Control-Max-Age"] = "86400";
+  }
+  return headers;
 }
 
 type NotificationType =
@@ -125,14 +129,14 @@ function buildUserPayload(
 }
 
 Deno.serve(async (req: Request) => {
-  const corsHeaders = buildCorsHeaders(req);
-
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
-      headers: corsHeaders,
+      headers: buildCorsHeaders(req, true),
     });
   }
+
+  const corsHeaders = buildCorsHeaders(req);
 
   try {
     const appId = Deno.env.get("ONESIGNAL_APP_ID");

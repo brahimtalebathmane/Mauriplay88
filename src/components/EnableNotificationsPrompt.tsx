@@ -49,6 +49,22 @@ export function EnableNotificationsPrompt() {
 
     if (Notification.permission === 'default') {
       setShouldShowPrompt(true);
+      // On Android & iOS PWA (standalone), auto-trigger OneSignal slidedown after a short delay
+      const isStandalone =
+        (window.matchMedia('(display-mode: standalone)').matches) ||
+        (navigator as any).standalone === true;
+      if (isStandalone && window.OneSignalDeferred) {
+        const t = setTimeout(() => {
+          window.OneSignalDeferred!.push(async (OneSignal: OneSignalApi) => {
+            try {
+              if (OneSignal?.Slidedown?.promptPush) OneSignal.Slidedown.promptPush();
+            } catch {
+              // ignore
+            }
+          });
+        }, 1500);
+        return () => clearTimeout(t);
+      }
       return;
     }
 

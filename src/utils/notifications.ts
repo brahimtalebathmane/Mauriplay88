@@ -29,12 +29,30 @@ export interface NotificationPayload {
 }
 
 /**
+ * Wait for service worker to be ready so background push can be displayed (Android/iOS PWA).
+ * Resolves after ready or after a short timeout so we don't block forever.
+ */
+async function waitForServiceWorkerReady(): Promise<void> {
+  if (typeof navigator === 'undefined' || !navigator.serviceWorker?.ready) return;
+  try {
+    await Promise.race([
+      navigator.serviceWorker.ready,
+      new Promise((r) => setTimeout(r, 3000)),
+    ]);
+  } catch {
+    // ignore
+  }
+}
+
+/**
  * Fire-and-forget: invoke Edge Function to send OneSignal notification.
+ * Waits for service worker ready before sending so push can show in background.
  * Does not throw; failures are logged only.
  */
 export async function triggerNotification(payload: NotificationPayload): Promise<void> {
   const baseUrl = payload.base_url ?? getBaseUrl();
   try {
+    await waitForServiceWorkerReady();
     await supabase.functions.invoke('send-notification', {
       body: { ...payload, base_url: baseUrl },
     });
