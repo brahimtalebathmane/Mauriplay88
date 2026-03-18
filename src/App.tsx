@@ -9,6 +9,7 @@ import { Home } from './pages/Home';
 import { PlatformPage } from './pages/Platform';
 import { Purchase } from './pages/Purchase';
 import { OrderSuccess } from './pages/OrderSuccess';
+import { WalletPurchaseSuccess } from './pages/WalletPurchaseSuccess';
 import { MyPurchases } from './pages/MyPurchases';
 import { Profile } from './pages/Profile';
 import { Wallet } from './pages/Wallet';
@@ -54,6 +55,7 @@ function App() {
         <Route path="/platform/:id" element={<ProtectedRoute><PlatformPage /></ProtectedRoute>} />
         <Route path="/purchase/:id" element={<ProtectedRoute><Purchase /></ProtectedRoute>} />
         <Route path="/order-success/:id" element={<ProtectedRoute><OrderSuccess /></ProtectedRoute>} />
+        <Route path="/wallet-purchase-success" element={<ProtectedRoute><WalletPurchaseSuccess /></ProtectedRoute>} />
         <Route path="/my-purchases" element={<ProtectedRoute><MyPurchases /></ProtectedRoute>} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />

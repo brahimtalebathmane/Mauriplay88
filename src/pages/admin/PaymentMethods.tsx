@@ -209,6 +209,7 @@ export const PaymentMethods = () => {
                 src={method.logo_url}
                 alt={method.name}
                 className="w-16 h-16 object-contain mx-auto mt-3"
+                onError={(e) => { (e.target as HTMLImageElement).src = '/icon-72.png'; }}
               />
             )}
           </div>

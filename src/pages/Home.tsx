@@ -207,6 +207,7 @@ export const Home = () => {
                     src={platform.logo_url}
                     alt={platform.name}
                     className="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-500"
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/icon-72.png'; }}
                   />
 
                   {platform.total_stock > 0 && (

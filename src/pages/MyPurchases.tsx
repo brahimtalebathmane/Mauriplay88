@@ -75,7 +75,7 @@ export const MyPurchases = () => {
         platform: {
           id: order.platform_id || '',
           name: order.platform_name || 'منصة محذ/وفة',
-          logo_url: order.platform_logo_url || '',
+          logo_url: order.platform_logo_url || '/icon-72.png',
           website_url: order.platform_website_url || '',
           tutorial_video_url: order.platform_tutorial_video_url || '',
           is_deleted: !order.platform_name,
@@ -193,9 +193,10 @@ export const MyPurchases = () => {
                         <div className="relative">
                            <div className="absolute inset-0 bg-cyan-500/20 blur-lg rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
                            <img
-                            src={order.platform?.logo_url || 'https://via.placeholder.com/100'}
+                            src={order.platform?.logo_url || '/icon-72.png'}
                             className="relative w-16 h-16 object-contain bg-black border border-white/10 rounded-2xl p-2"
                             alt=""
+                            onError={(e) => { (e.target as HTMLImageElement).src = '/icon-72.png'; }}
                           />
                         </div>
                         <div>

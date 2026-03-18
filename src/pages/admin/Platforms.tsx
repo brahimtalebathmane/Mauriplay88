@@ -257,7 +257,7 @@ export const Platforms = () => {
                   src={platform.logo_url}
                   alt={platform.name}
                   className="max-w-full max-h-full object-contain drop-shadow-md"
-                  onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/150?text=No+Image'; }}
+                  onError={(e) => { (e.target as HTMLImageElement).src = '/icon-72.png'; }}
                 />
               </div>
               <h3 className="text-white text-center font-bold mb-4 text-lg">{platform.name}</h3>

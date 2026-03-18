@@ -1,6 +1,6 @@
-const CACHE_NAME = 'mauriplay-v6.0';
-const STATIC_CACHE = 'mauriplay-static-v6.0';
-const RUNTIME_CACHE = 'mauriplay-runtime-v6.0';
+const CACHE_NAME = 'mauriplay-v6.1';
+const STATIC_CACHE = 'mauriplay-static-v6.1';
+const RUNTIME_CACHE = 'mauriplay-runtime-v6.1';
 
 const staticAssets = [
   '/offline.html',
@@ -78,13 +78,13 @@ self.addEventListener('fetch', (event) => {
         .then((response) => {
           if (response.ok) {
             const clone = response.clone();
-            caches.open(RUNTIME_CACHE).then((c) => c.put(request, clone));
+            caches.open(RUNTIME_CACHE).then((c) => c.put(request, clone)).catch(() => {});
           }
           return response;
         })
-        .catch(() => {
-          return caches.match(request).then((cached) => cached || caches.match('/offline.html'));
-        })
+        .catch(() => caches.match(request).then((cached) => cached || caches.match('/offline.html')))
+        .then((response) => response || caches.match('/offline.html'))
+        .catch(() => caches.match('/offline.html'))
     );
     return;
   }
@@ -96,26 +96,41 @@ self.addEventListener('fetch', (event) => {
         .then((response) => {
           if (response.ok) {
             const clone = response.clone();
-            caches.open(RUNTIME_CACHE).then((c) => c.put(request, clone));
+            caches.open(RUNTIME_CACHE).then((c) => c.put(request, clone)).catch(() => {});
           }
           return response;
         })
         .catch(() => caches.match(request))
+        .catch(() => new Response('', { status: 503, statusText: 'Service Unavailable' }))
     );
     return;
   }
 
-  // Static assets: Cache First
+  // Static assets & images: Cache First, with .catch() to avoid unhandled rejections
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;
-      return fetch(request).then((res) => {
-        if (res.ok) {
-          const clone = res.clone();
-          caches.open(STATIC_CACHE).then((c) => c.put(request, clone));
-        }
-        return res;
-      });
+      return fetch(request)
+        .then((res) => {
+          if (res.ok) {
+            const clone = res.clone();
+            caches.open(RUNTIME_CACHE).then((c) => c.put(request, clone)).catch(() => {});
+          }
+          return res;
+        })
+        .catch((err) => {
+          console.warn('[SW] Fetch failed:', request.url, err);
+          return caches.match(request).then((cached) => {
+            if (cached) return cached;
+            return caches.match('/icon-72.png').then((fallback) => {
+              if (fallback) return fallback;
+              return new Response('', { status: 504, statusText: 'Gateway Timeout' });
+            });
+          });
+        });
+    }).catch((err) => {
+      console.warn('[SW] Cache match failed:', err);
+      return new Response('', { status: 503, statusText: 'Service Unavailable' });
     })
   );
 });

@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import type { OrderWithDetails, InventoryStatus } from '../types';
 import { showToast } from '../components/Toast';
 import { Copy, CheckCircle, ExternalLink, Clock, Home, ShoppingBag, PlayCircle, ArrowRight } from 'lucide-react';
+import { FALLBACK_IMAGE } from '../constants';
 
 export const OrderSuccess = () => {
   const { id } = useParams<{ id: string }>();
@@ -140,9 +141,10 @@ export const OrderSuccess = () => {
           <div className="flex items-center gap-6 mb-8 border-b border-white/5 pb-6">
             <div className="w-20 h-20 bg-black border border-white/10 rounded-2xl p-3 shadow-inner">
                <img
-                src={order.platform?.logo_url || 'https://via.placeholder.com/100'}
+                src={order.platform?.logo_url || FALLBACK_IMAGE}
                 alt=""
                 className="w-full h-full object-contain"
+                onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMAGE; }}
               />
             </div>
             <div>

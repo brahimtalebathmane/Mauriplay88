@@ -238,9 +238,10 @@ export const Products = () => {
           <div key={product.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-blue-500/50 transition-all duration-300">
             <div className="h-16 flex items-center justify-center mb-3 bg-black/20 rounded">
               <img 
-                src={product.logo_url ?? product.product_logo_url ?? 'https://placehold.co/400x400?text=No+Logo'} 
+                src={product.logo_url ?? product.product_logo_url ?? '/icon-72.png'} 
                 alt="" 
-                className="max-h-full object-contain" 
+                className="max-h-full object-contain"
+                onError={(e) => { (e.target as HTMLImageElement).src = '/icon-72.png'; }}
               />
             </div>
             <h3 className="text-white text-xl font-bold mb-1 text-center">{product.name}</h3>

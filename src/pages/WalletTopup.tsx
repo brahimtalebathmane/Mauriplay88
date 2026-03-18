@@ -328,6 +328,7 @@ export const WalletTopup = () => {
                           src={method.logo_url}
                           alt={method.name}
                           className="w-12 h-12 object-contain rounded"
+                          onError={(e) => { (e.target as HTMLImageElement).src = '/icon-72.png'; }}
                         />
                       )}
                       <div className="flex-1 text-right">

@@ -4,7 +4,6 @@ import { Header } from '../components/Header';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { LoadingScreen } from '../components/LoadingScreen';
-import { PurchaseSuccessModal } from '../components/PurchaseSuccessModal';
 import { supabase } from '../lib/supabase';
 import { useStore } from '../store/useStore';
 import type { Product, PaymentMethod } from '../types';
@@ -28,15 +27,6 @@ export const Purchase = () => {
   const [receipt, setReceipt] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
 
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [purchaseData, setPurchaseData] = useState<{
-    code: string;
-    productName: string;
-    platformName: string;
-    platformLogoUrl?: string;
-    platformWebsiteUrl?: string;
-    platformTutorialVideoUrl?: string;
-  } | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -99,19 +89,21 @@ export const Purchase = () => {
           if (bal?.success && typeof bal.wallet_balance === 'number') {
             updateWalletBalance(bal.wallet_balance);
           }
-        });
+        }).catch(() => {});
 
-        setPurchaseData({
-          code: data.code,
-          productName: data.product_name,
-          platformName: data.platform_name,
-          platformLogoUrl: data.platform_logo_url,
-          platformWebsiteUrl: data.platform_website_url,
-          platformTutorialVideoUrl: data.platform_tutorial_video_url,
-        });
-
-        setShowSuccessModal(true);
         showToast('تمت عملية الشراء بنجاح', 'success');
+        navigate('/wallet-purchase-success', {
+          replace: true,
+          state: {
+            code: data.code,
+            productName: data.product_name,
+            platformName: data.platform_name,
+            platformLogoUrl: data.platform_logo_url,
+            platformWebsiteUrl: data.platform_website_url,
+            platformTutorialVideoUrl: data.platform_tutorial_video_url,
+            orderId: data.order_id,
+          },
+        });
       } else {
         logger.warn('Purchase', 'Wallet purchase failed', { message: data.message });
         showToast(data.message, 'error');
@@ -123,11 +115,6 @@ export const Purchase = () => {
       setPurchasing(false);
       logger.debug('Purchase', 'Wallet purchase attempt completed');
     }
-  };
-
-  const handleCloseSuccessModal = () => {
-    setShowSuccessModal(false);
-    navigate('/my-purchases');
   };
 
   const handleManualPurchase = async () => {
@@ -212,21 +199,7 @@ export const Purchase = () => {
   const hasBalance = (user?.wallet_balance || 0) >= product.price_mru;
 
   return (
-    <>
-      {purchaseData && (
-        <PurchaseSuccessModal
-          isOpen={showSuccessModal}
-          onClose={handleCloseSuccessModal}
-          code={purchaseData.code}
-          productName={purchaseData.productName}
-          platformName={purchaseData.platformName}
-          platformLogoUrl={purchaseData.platformLogoUrl}
-          platformWebsiteUrl={purchaseData.platformWebsiteUrl}
-          platformTutorialVideoUrl={purchaseData.platformTutorialVideoUrl}
-        />
-      )}
-
-      <div className="min-h-screen bg-[#050505] text-white">
+    <div className="min-h-screen bg-[#050505] text-white">
         <Header />
         <div className="max-w-2xl mx-auto px-4 pt-24 pb-12">
 
@@ -353,6 +326,7 @@ export const Purchase = () => {
                           src={method.logo_url}
                           alt={method.name}
                           className="w-full h-full object-contain"
+                          onError={(e) => { (e.target as HTMLImageElement).src = '/icon-72.png'; }}
                         />
                       </div>
                     ) : (
@@ -440,6 +414,5 @@ export const Purchase = () => {
         )}
         </div>
       </div>
-    </>
   );
 };

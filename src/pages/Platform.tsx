@@ -118,7 +118,7 @@ export const PlatformPage = () => {
                     src={platform.logo_url} 
                     alt={platform.name} 
                     className="w-full h-full object-contain drop-shadow-[0_0_30px_rgba(6,182,212,0.3)] transform group-hover:scale-105 transition duration-500" 
-                    onError={(e) => { (e.target as HTMLImageElement).src = 'https://via.placeholder.com/200?text=No+Logo'; }}
+                    onError={(e) => { (e.target as HTMLImageElement).src = '/icon-72.png'; }}
                   />
                 </div>
               </div>
@@ -201,7 +201,7 @@ export const PlatformPage = () => {
                   <div className="flex-shrink-0">
                     <div className="w-14 h-14 bg-gray-900 rounded-xl border border-white/5 flex items-center justify-center overflow-hidden">
                       {product.product_logo_url ? (
-                        <img src={product.product_logo_url} alt="" className="w-full h-full object-contain p-2" />
+                        <img src={product.product_logo_url} alt="" className="w-full h-full object-contain p-2" onError={(e) => { (e.target as HTMLImageElement).src = '/icon-72.png'; }} />
                       ) : (
                         <span className="text-xl font-black text-gray-700">{product.name.charAt(0)}</span>
                       )}
