@@ -1,13 +1,11 @@
-import { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, ShoppingBag, Wallet, Menu, User, FileText, MessageCircle, LogOut } from 'lucide-react';
+import { Home, ShoppingBag, Wallet, Menu } from 'lucide-react';
 import { useStore } from '../store/useStore';
 
 export const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, logout } = useStore();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const { user } = useStore();
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -38,7 +36,6 @@ export const BottomNav = () => {
             {/* Home */}
             <button
               onClick={() => {
-                setMenuOpen(false);
                 navigate('/');
               }}
               className={`flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-xs font-medium transition-all ${
@@ -52,7 +49,6 @@ export const BottomNav = () => {
             {/* My Purchases */}
             <button
               onClick={() => {
-                setMenuOpen(false);
                 navigate('/my-purchases');
               }}
               className={`flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-xs font-medium transition-all ${
@@ -67,7 +63,6 @@ export const BottomNav = () => {
             {user?.wallet_active ? (
               <button
                 onClick={() => {
-                  setMenuOpen(false);
                   navigate('/wallet');
                 }}
                 className={`flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-xs font-medium transition-all ${
@@ -84,64 +79,16 @@ export const BottomNav = () => {
               </div>
             )}
 
-            {/* Menu with submenu */}
-            <div className="relative">
-              <button
-                onClick={() => setMenuOpen((open) => !open)}
-                className={`w-full flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-xs font-medium transition-all ${
-                  menuOpen ? 'text-white bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Menu className="w-5 h-5" />
-                <span>القائمة</span>
-              </button>
-
-              {menuOpen && (
-                <div className="absolute bottom-14 left-0 right-0">
-                  <div className="bg-[#050505]/98 border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl overflow-hidden animate-in slide-in-from-bottom duration-200">
-                    <div className="flex flex-col text-right">
-                      <button
-                        onClick={() => {
-                          navigate('/profile');
-                          setMenuOpen(false);
-                        }}
-                        className="flex items-center justify-end gap-3 px-4 py-2 text-sm text-white hover:bg-white/5"
-                      >
-                        <span>الملف الشخصي</span>
-                        <User className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          navigate('/terms-and-conditions');
-                          setMenuOpen(false);
-                        }}
-                        className="flex items-center justify-end gap-3 px-4 py-2 text-sm text-white hover:bg-white/5"
-                      >
-                        <span>الشروط والأحكام</span>
-                        <FileText className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={handleSupport}
-                        className="flex items-center justify-end gap-3 px-4 py-2 text-sm text-white hover:bg-white/5"
-                      >
-                        <span>الدعم</span>
-                        <MessageCircle className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center justify-end gap-3 px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 border-t border-white/5"
-                      >
-                        <span>تسجيل الخروج</span>
-                        <LogOut className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Menu - navigates to full-screen menu page */}
+            <button
+              onClick={() => navigate('/menu')}
+              className={`flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-xs font-medium transition-all ${
+                isActive('/menu') ? 'text-white bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Menu className="w-5 h-5" />
+              <span>القائمة</span>
+            </button>
           </div>
         </div>
       </div>
