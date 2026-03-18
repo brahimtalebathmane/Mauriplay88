@@ -98,15 +98,15 @@ export const WalletPurchaseSuccess = () => {
                 <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full" />
                 <CheckCircle className="w-24 h-24 text-green-500 mx-auto relative shadow-2xl" />
               </div>
-              <h1 className="text-4xl font-black mb-3">Purchase completed successfully</h1>
+              <h1 className="text-4xl font-black mb-3">تمت عملية الشراء بنجاح</h1>
             </div>
 
             <div className="w-full bg-[#0a0a0a] border border-white/5 rounded-[2.5rem] p-8 mb-6 shadow-2xl">
               <div className="relative group mb-6">
                 <div className="absolute -inset-1 bg-gradient-to-r from-green-500 to-cyan-500 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-500" />
                 <div className="relative bg-black rounded-[1.5rem] border border-white/10 p-6 flex flex-col items-center gap-4">
-                  <span className="text-[10px] text-gray-500 uppercase font-black tracking-[0.3em]">
-                    Recharge Code
+                  <span className="text-[10px] text-gray-500 font-black tracking-[0.3em]">
+                    كود الشحن
                   </span>
                   <p className="text-3xl font-mono font-bold text-white break-all text-center tracking-wider select-all" title={code || undefined}>
                     {code}
@@ -130,7 +130,7 @@ export const WalletPurchaseSuccess = () => {
                     className="flex items-center justify-center gap-3 bg-white/5 text-white border border-white/10 py-4 rounded-2xl hover:bg-white/10 transition-all font-bold"
                   >
                     <ExternalLink className="w-5 h-5 text-cyan-400" />
-                    Usage Link
+                    رابط الاستخدام
                   </button>
                 )}
                 {platformTutorialVideoUrl && (
@@ -139,7 +139,7 @@ export const WalletPurchaseSuccess = () => {
                     className="flex items-center justify-center gap-3 bg-red-600/10 text-red-500 border border-red-600/20 py-4 rounded-2xl hover:bg-red-600/20 transition-all font-bold"
                   >
                     <PlayCircle className="w-5 h-5" />
-                    Watch Tutorial
+                    مشاهدة الفيديو التعليمي
                   </button>
                 )}
               </div>
@@ -159,7 +159,7 @@ export const WalletPurchaseSuccess = () => {
           className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 py-4 rounded-2xl font-bold hover:opacity-90 transition-all"
         >
           <Check className="w-5 h-5" />
-          Done
+          تم
         </button>
       </div>
     </div>
