@@ -10,6 +10,7 @@ import { useStore } from '../store/useStore';
 import type { Product, PaymentMethod } from '../types';
 import { showToast } from '../components/Toast';
 import { logger } from '../utils/logger';
+import { FALLBACK_IMAGE } from '../constants';
 import { Wallet, CreditCard, Upload, X, CheckCircle2, AlertCircle, ShieldCheck, ArrowRight, MessageCircle } from 'lucide-react';
 
 export const Purchase = () => {
@@ -216,12 +217,38 @@ export const Purchase = () => {
 
         {/* ملخص المنتج */}
         <div className="relative overflow-hidden bg-gradient-to-br from-[#0a0a0a] to-[#111] border border-white/10 rounded-[2.5rem] p-8 mb-8 shadow-2xl">
-          <div className="flex flex-col items-center text-center">
-            <h2 className="text-gray-400 text-sm font-black uppercase tracking-[0.3em] mb-2">Order Summary</h2>
-            <h1 className="text-3xl font-black mb-4">{product.name}</h1>
-            <div className="px-6 py-3 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl">
-               <span className="text-4xl font-black text-cyan-400">{product.price_mru}</span>
-               <span className="text-sm font-bold text-cyan-600 mr-2 uppercase">MRU</span>
+          <div className="flex flex-col items-center text-center gap-4">
+            {/* شعار المنتج أو حرف أولي */}
+            <div className="w-24 h-24 sm:w-28 sm:h-28 bg-black rounded-3xl border border-white/10 flex items-center justify-center overflow-hidden">
+              {product.product_logo_url ? (
+                <img
+                  src={product.product_logo_url}
+                  alt={product.name}
+                  className="w-full h-full object-contain p-3"
+                  onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK_IMAGE; }}
+                />
+              ) : (
+                <span className="text-3xl font-black text-gray-700">
+                  {product.name.charAt(0)}
+                </span>
+              )}
+            </div>
+
+            <div>
+              <h2 className="text-gray-400 text-sm font-black uppercase tracking-[0.3em] mb-2">
+                Order Summary
+              </h2>
+              <h1 className="text-3xl font-black mb-4 break-words">
+                {product.name}
+              </h1>
+              <div className="inline-flex items-baseline px-6 py-3 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl">
+                <span className="text-4xl font-black text-cyan-400">
+                  {product.price_mru}
+                </span>
+                <span className="text-sm font-bold text-cyan-600 mr-2 uppercase">
+                  MRU
+                </span>
+              </div>
             </div>
           </div>
         </div>
