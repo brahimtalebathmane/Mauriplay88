@@ -22,7 +22,7 @@ export const Home = () => {
 
   const slides = [
     "https://i.postimg.cc/jSh9KszX/kl-mathtj.png",
-    "https://i.postimg.cc/Jzgs3Xy0/kl-mathtj.png"
+    "https://i.postimg.cc/6567nMV2/kl-mathtj.png"
   ];
 
   useEffect(() => {
