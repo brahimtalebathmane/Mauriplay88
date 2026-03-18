@@ -6,6 +6,43 @@
   direction: rtl;
 }
 
+/* Shared layout: page wrapper for main app pages (with Header + BottomNav) */
+@layer components {
+  .page-wrap {
+    @apply min-h-screen bg-page text-white;
+    padding-bottom: max(5rem, env(safe-area-inset-bottom));
+  }
+  .page-content {
+    @apply mx-auto px-page-x;
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+  .page-content-narrow {
+    @apply max-w-content-narrow mx-auto px-page-x;
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+  .page-content-standard {
+    @apply max-w-content mx-auto px-page-x;
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+  .page-content-wide {
+    @apply max-w-content-wide mx-auto px-page-x;
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+  }
+  .section-gap {
+    @apply mb-section;
+  }
+  .card-base {
+    @apply rounded-card border border-white/10 bg-card overflow-hidden;
+  }
+  .card-base-lg {
+    @apply rounded-card-lg border border-white/10 bg-card overflow-hidden;
+  }
+}
+
 /* Safe area insets for modern mobile devices */
 @supports (padding: max(0px)) {
   body {

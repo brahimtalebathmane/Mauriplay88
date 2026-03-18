@@ -81,11 +81,11 @@ export const PlatformPage = () => {
 
   if (!platform && !loading) {
     return (
-      <div className="min-h-screen bg-[#050505] pb-20">
+      <div className="page-wrap">
         <Header />
-        <div className="flex flex-col items-center justify-center h-64 gap-4">
-          <div className="text-gray-400 text-xl font-medium animate-pulse">المنصة غير موجودة</div>
-          <button onClick={() => navigate('/')} className="text-cyan-500 hover:underline">العودة للرئيسية</button>
+        <div className="page-content-wide flex flex-col items-center justify-center min-h-[40vh] gap-4">
+          <p className="text-gray-400 text-body font-medium animate-pulse">المنصة غير موجودة</p>
+          <button onClick={() => navigate('/')} className="text-cyan-500 hover:underline font-medium">العودة للرئيسية</button>
         </div>
         <BottomNav />
       </div>
@@ -93,22 +93,20 @@ export const PlatformPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white font-sans selection:bg-cyan-500/30 pb-20">
+    <div className="page-wrap font-sans selection:bg-cyan-500/30">
       <Header />
-
-      {/* Back button */}
-      <div className="max-w-7xl mx-auto px-4 pt-24">
+      <div className="page-content-wide">
+        {/* Back button */}
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4 group"
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-section group"
         >
           <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           <span>العودة للرئيسية</span>
         </button>
-      </div>
 
       {/* Hero Section */}
-      <div className="relative w-full pb-10 overflow-hidden">
+      <div className="relative w-full pb-8 sm:pb-10 overflow-hidden">
         {platform && (
           <>
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[500px] bg-gradient-to-b from-cyan-900/10 via-transparent to-transparent blur-[120px] rounded-full pointer-events-none" />
@@ -141,16 +139,16 @@ export const PlatformPage = () => {
       </div>
 
       {/* قسم المنتجات */}
-      <div className="max-w-4xl mx-auto px-4 pb-24 relative z-20">
-        <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
-          <h2 className="text-lg font-bold flex items-center gap-3">
-            <span className="flex h-2 w-2 relative">
+      <div className="max-w-4xl mx-auto relative z-20 pt-2">
+        <div className="flex items-center justify-between mb-section border-b border-white/10 pb-4">
+          <h2 className="text-section-title font-bold flex items-center gap-3">
+            <span className="flex h-2 w-2 relative flex-shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
             </span>
             العروض المتوفرة
           </h2>
-          <div className="bg-white/5 px-3 py-1 rounded-md text-[9px] font-bold text-gray-500 uppercase tracking-widest">
+          <div className="bg-white/5 px-3 py-1.5 rounded-btn text-small font-bold text-gray-500 uppercase tracking-widest">
              {products.length} Products
           </div>
         </div>
@@ -159,7 +157,7 @@ export const PlatformPage = () => {
           {loading ? (
             <div className="space-y-4">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="h-24 bg-white/5 rounded-2xl animate-pulse border border-white/5" />
+                <div key={i} className="h-24 bg-white/5 rounded-card animate-pulse border border-white/10" />
               ))}
             </div>
           ) : products.length > 0 ? (
@@ -168,10 +166,10 @@ export const PlatformPage = () => {
                 key={product.id}
                 onClick={() => product.stock_count > 0 && navigate(`/purchase/${product.id}`)}
                 disabled={product.stock_count === 0}
-                className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 ${
+                className={`group relative overflow-hidden rounded-card border transition-all duration-300 ${
                   product.stock_count > 0
-                    ? 'bg-[#0a0a0a] border-white/5 hover:border-cyan-500/30 hover:bg-[#0f0f0f] active:scale-[0.98]'
-                    : 'bg-black/40 border-red-900/5 opacity-50 cursor-not-allowed'
+                    ? 'bg-card border-white/10 hover:border-cyan-500/30 hover:bg-cardHover active:scale-[0.99]'
+                    : 'bg-black/40 border-red-900/20 opacity-50 cursor-not-allowed'
                 }`}
               >
                 <div className="relative p-5 flex items-center justify-between gap-4">
@@ -214,11 +212,12 @@ export const PlatformPage = () => {
               </button>
             ))
           ) : (
-            <div className="text-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
-              <p className="text-gray-500">لا توجد منتجات متاحة حالياً لهذه المنصة.</p>
+            <div className="text-center py-16 sm:py-20 bg-white/5 rounded-card-lg border border-dashed border-white/10">
+              <p className="text-caption text-gray-500">لا توجد منتجات متاحة حالياً لهذه المنصة.</p>
             </div>
           )}
         </div>
+      </div>
       </div>
       <BottomNav />
     </div>

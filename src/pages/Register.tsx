@@ -74,25 +74,24 @@ export const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center px-4 relative overflow-hidden">
-      {/* خلفية جمالية خفيفة */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full" />
+    <div className="min-h-screen bg-page flex flex-col items-center justify-center px-page-x py-12 relative overflow-hidden">
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-cyan-500/10 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none" />
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="text-center mb-10">
+      <div className="w-full max-w-content-narrow relative z-10">
+        <div className="text-center mb-8 sm:mb-10">
           <img
             src="https://i.postimg.cc/VJ87tfYs/image.png"
             alt="MauriPlay"
-            className="h-20 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+            className="h-16 sm:h-20 mx-auto mb-6 drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]"
           />
-          <h1 className="text-white text-3xl font-black italic tracking-tighter">
+          <h1 className="text-white text-page-title sm:text-3xl font-black italic tracking-tighter">
             انضم إلينا اليوم
           </h1>
-          <p className="text-gray-500 mt-2 font-medium">خطوة واحدة تفصلك عن عالم من المتعة الرقمية</p>
+          <p className="text-caption text-gray-500 mt-2 font-medium">خطوة واحدة تفصلك عن عالم من المتعة الرقمية</p>
         </div>
 
-        <form onSubmit={handleRegister} className="space-y-5 bg-[#0a0a0a] border border-white/5 p-8 rounded-[2.5rem] shadow-2xl">
+        <form onSubmit={handleRegister} className="space-y-5 card-base-lg p-6 sm:p-8 shadow-card">
           
           <div className="space-y-1">
             <label className="flex items-center gap-2 text-gray-400 text-xs font-black uppercase tracking-widest mr-1 mb-2">

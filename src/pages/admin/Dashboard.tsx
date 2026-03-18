@@ -23,21 +23,22 @@ export const AdminDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-black">
-      <div className="bg-gray-900 border-b border-gray-800 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+    <div className="min-h-screen bg-page">
+      <div className="bg-card border-b border-white/10 sticky top-0 z-40">
+        <div className="max-w-content-max mx-auto px-page-x py-4">
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => navigate('/')}
-              className="text-white p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              className="text-white p-2 hover:bg-white/10 rounded-btn transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+              aria-label="العودة"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
-            <h1 className="text-white text-2xl font-bold">لوحة الإدارة</h1>
+            <h1 className="text-white text-section-title font-bold">لوحة الإدارة</h1>
             <div className="w-10" />
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-2">
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               const isActive = location.pathname.startsWith(tab.path);
@@ -45,14 +46,14 @@ export const AdminDashboard = () => {
                 <button
                   key={tab.path}
                   onClick={() => navigate(tab.path)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-btn whitespace-nowrap transition-colors text-sm font-medium ${
                     isActive
                       ? 'bg-white text-black'
-                      : 'bg-gray-800 text-white hover:bg-gray-700'
+                      : 'bg-white/10 text-white hover:bg-white/15'
                   }`}
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="text-sm font-medium">{tab.label}</span>
+                  <Icon className="w-4 h-4 flex-shrink-0" />
+                  <span>{tab.label}</span>
                 </button>
               );
             })}
@@ -60,7 +61,7 @@ export const AdminDashboard = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-content-max mx-auto px-page-x py-6 sm:py-8">
         <Routes>
           <Route index element={<Orders />} />
           <Route path="orders" element={<Orders />} />

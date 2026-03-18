@@ -113,20 +113,17 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black flex flex-col items-center justify-center px-4">
-      {/* الشعار بخلفية سوداء نقية */}
+    <div className="min-h-screen bg-page flex flex-col items-center justify-center px-page-x py-12">
       <img
         src="https://i.postimg.cc/VJ87tfYs/image.png"
         alt="MauriPlay"
-        className="h-20 mb-12"
+        className="h-16 sm:h-20 mb-8 sm:mb-12"
       />
-
-      <div className="w-full max-w-md">
-        <h1 className="text-white text-3xl font-bold text-center mb-8">
+      <div className="w-full max-w-content-narrow">
+        <h1 className="text-white text-page-title sm:text-3xl font-bold text-center mb-section">
           تسجيل الدخول
         </h1>
-
-        <form onSubmit={handleLogin} className="space-y-6">
+        <form onSubmit={handleLogin} className="space-y-5 sm:space-y-6">
           <PhoneInput
             label="رقم الهاتف"
             value={phone}
@@ -162,7 +159,7 @@ export const Login = () => {
             </button>
           </p>
 
-          <p className="text-center text-gray-500 text-xs mt-4">
+          <p className="text-center text-gray-500 text-caption mt-6">
             بتسجيل الدخول، أنت توافق على{' '}
             <button
               type="button"

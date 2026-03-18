@@ -202,21 +202,21 @@ export const Purchase = () => {
   const hasBalance = (user?.wallet_balance || 0) >= product.price_mru;
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white pb-20">
+    <div className="page-wrap">
         <Header />
-        <div className="max-w-2xl mx-auto px-4 pt-24 pb-12">
+        <div className="page-content-standard">
 
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-section"
         >
           <ArrowRight className="w-5 h-5" />
           <span>العودة</span>
         </button>
 
         {/* ملخص المنتج */}
-        <div className="relative overflow-hidden bg-gradient-to-br from-[#0a0a0a] to-[#111] border border-white/10 rounded-[2.5rem] p-8 mb-8 shadow-2xl">
+        <div className="relative overflow-hidden card-base-lg bg-gradient-to-br from-card to-[#111] p-6 sm:p-8 section-gap shadow-card">
           <div className="flex flex-col items-center text-center gap-4">
             {/* شعار المنتج أو صورة افتراضية */}
             <div className="w-24 h-24 sm:w-28 sm:h-28 bg-black rounded-3xl border border-white/10 flex items-center justify-center overflow-hidden p-3">
@@ -247,7 +247,7 @@ export const Purchase = () => {
         </div>
 
         {/* اختيار وسيلة الدفع */}
-        <div className="bg-[#0a0a0a] border border-white/5 rounded-[2rem] p-2 flex mb-8">
+        <div className="card-base p-2 flex section-gap">
           <button
             onClick={() => setPaymentType('wallet')}
             className={`flex-1 flex items-center justify-center gap-2 py-4 rounded-xl font-bold transition-all ${
@@ -323,7 +323,7 @@ export const Purchase = () => {
             )}
           </div>
         ) : (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+          <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4">
             {/* قائمة الحسابات */}
             {paymentMethods.length === 0 ? (
               <div className="text-center text-red-400 py-4 rounded-2xl bg-red-500/10 border border-red-500/20">

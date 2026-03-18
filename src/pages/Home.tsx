@@ -106,11 +106,10 @@ export const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white pb-20">
+    <div className="page-wrap">
       <Header />
-
-      <div className="pt-20 px-4 max-w-6xl mx-auto pb-10">
-        <div className="relative w-full h-48 overflow-hidden rounded-2xl mb-8 border border-white/5">
+      <div className="page-content-wide">
+        <div className="relative w-full h-48 sm:h-52 overflow-hidden rounded-card-lg mb-section border border-white/10">
           {slides.map((slide, index) => (
             <div
               key={index}
@@ -141,7 +140,7 @@ export const Home = () => {
         {user && user.wallet_active && (
           <div
             onClick={() => navigate('/wallet')}
-            className="mb-8 p-6 rounded-3xl bg-gradient-to-br from-cyan-950/40 via-cyan-900/20 to-black border border-cyan-500/20 hover:border-cyan-500/40 transition-all cursor-pointer active:scale-[0.99] group"
+            className="section-gap p-6 rounded-card-lg bg-gradient-to-br from-cyan-950/40 via-cyan-900/20 to-black border border-cyan-500/20 hover:border-cyan-500/40 transition-all cursor-pointer active:scale-[0.99] group"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
@@ -162,13 +161,13 @@ export const Home = () => {
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-black text-white flex items-center gap-3">
-            <ShoppingBag className="w-6 h-6 text-cyan-500" />
+        <div className="flex items-center justify-between mb-section">
+          <h2 className="text-section-title md:text-page-title font-black text-white flex items-center gap-3">
+            <ShoppingBag className="w-6 h-6 text-cyan-500 flex-shrink-0" />
             المنصات المتاحة
           </h2>
           {!loading && platforms.length > 0 && (
-            <div className="bg-white/5 px-3 py-1 rounded-lg text-xs font-bold text-gray-400 uppercase">
+            <div className="bg-white/5 px-3 py-1.5 rounded-btn text-small font-bold text-gray-400 uppercase">
               {platforms.length} {platforms.length === 1 ? 'Platform' : 'Platforms'}
             </div>
           )}
@@ -179,17 +178,17 @@ export const Home = () => {
             {[...Array(8)].map((_, i) => (
               <div
                 key={i}
-                className="aspect-[3/4] rounded-2xl bg-white/5 animate-pulse border border-white/5"
+                className="aspect-[3/4] rounded-card bg-white/5 animate-pulse border border-white/10"
               />
             ))}
           </div>
         ) : platforms.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="w-24 h-24 rounded-full bg-white/5 flex items-center justify-center mb-6">
-              <ShoppingBag className="w-12 h-12 text-gray-600" />
+          <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/5 flex items-center justify-center mb-section">
+              <ShoppingBag className="w-10 h-10 sm:w-12 sm:h-12 text-gray-500" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-300 mb-3">لا توجد منصات متاحة حالياً</h3>
-            <p className="text-gray-500 max-w-md">
+            <h3 className="text-section-title font-bold text-gray-300 mb-3">لا توجد منصات متاحة حالياً</h3>
+            <p className="text-caption text-gray-500 max-w-md px-4">
               سيتم إضافة المنصات والمنتجات قريباً. تابعنا للحصول على آخر التحديثات.
             </p>
           </div>
@@ -201,7 +200,7 @@ export const Home = () => {
                 onClick={() => navigate(`/platform/${platform.id}`)}
                 className="group flex flex-col cursor-pointer active:scale-95 transition-all"
               >
-                <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden border border-white/10 bg-gradient-to-b from-gray-900 to-black group-hover:border-cyan-500/30 transition-all shadow-lg group-hover:shadow-cyan-500/10">
+                <div className="relative aspect-[3/4] w-full rounded-card overflow-hidden border border-white/10 bg-gradient-to-b from-gray-900 to-black group-hover:border-cyan-500/30 transition-all shadow-card group-hover:shadow-card-hover">
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent z-10" />
 
                   <img

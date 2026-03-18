@@ -103,24 +103,24 @@ export const Wallet = () => {
 
   if (!user?.wallet_active) {
     return (
-      <div className="min-h-screen bg-[#050505] pb-20">
+      <div className="page-wrap">
         <Header />
-        <div className="pt-24 px-4 pb-8 flex items-center justify-center min-h-[80vh]">
+        <div className="page-content flex flex-col items-center justify-center min-h-[70vh]">
           <div className="max-w-md w-full text-center">
-            <div className="relative mb-8 flex justify-center">
+            <div className="relative mb-section flex justify-center">
               <div className="absolute inset-0 bg-white/5 blur-3xl rounded-full" />
-              <div className="relative bg-gradient-to-b from-[#111] to-black border border-white/10 w-24 h-24 rounded-[2rem] flex items-center justify-center shadow-2xl">
+              <div className="relative bg-gradient-to-b from-[#111] to-black border border-white/10 w-24 h-24 rounded-card-lg flex items-center justify-center shadow-card">
                 <WalletIcon className="w-12 h-12 text-gray-600" />
                 <div className="absolute -top-1 -right-1 bg-red-500 w-4 h-4 rounded-full border-2 border-black" />
               </div>
             </div>
-            <h2 className="text-white text-3xl font-black mb-4 tracking-tighter italic">المحفظة غير مفعلة</h2>
-            <p className="text-gray-500 mb-8 leading-relaxed font-medium">
+            <h2 className="text-white text-page-title font-black mb-4 tracking-tighter italic">المحفظة غير مفعلة</h2>
+            <p className="text-caption text-gray-500 mb-section leading-relaxed font-medium">
               حسابك يحتاج إلى تفعيل ميزة المحفظة لتتمكن من الشحن والشراء السريع. تواصل مع الدعم الفني لتفعيلها الآن.
             </p>
             <Button 
               onClick={handleWhatsAppContact} 
-              className="w-full py-4 rounded-2xl bg-[#25D366] hover:bg-[#20ba5a] text-black font-black flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(37,211,102,0.2)]"
+              className="w-full py-4 rounded-card-lg bg-[#25D366] hover:bg-[#20ba5a] text-black font-black flex items-center justify-center gap-3 shadow-[0_10px_30px_rgba(37,211,102,0.2)]"
             >
               <MessageCircle className="w-6 h-6 fill-current" />
               <span>تفعيل عبر واتساب</span>
@@ -133,22 +133,20 @@ export const Wallet = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white pb-20">
+    <div className="page-wrap">
       <Header />
-      <div className="pt-24 px-4 pb-12">
-        <div className="max-w-2xl mx-auto">
-
+      <div className="page-content-standard">
           {/* Back button */}
           <button
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-section"
           >
             <ArrowRight className="w-5 h-5" />
             <span>العودة للرئيسية</span>
           </button>
           
           {/* بطاقة الرصيد الرئيسية */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-[#111] via-[#0a0a0a] to-black border border-white/10 rounded-[2.5rem] p-10 mb-8 shadow-2xl group">
+          <div className="relative overflow-hidden card-base-lg bg-gradient-to-br from-[#111] via-card to-black p-8 sm:p-10 section-gap shadow-card group">
             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:scale-110 transition-transform">
                 <WalletIcon className="w-32 h-32" />
             </div>
@@ -182,10 +180,10 @@ export const Wallet = () => {
           </div>
 
           {/* سجل المعاملات */}
-          <div className="bg-[#0a0a0a] border border-white/5 rounded-[2.5rem] overflow-hidden">
-            <div className="p-6 border-b border-white/5 flex items-center justify-between">
-               <span className="bg-white/5 px-3 py-1 rounded-lg text-[10px] font-black text-gray-500 uppercase tracking-widest">History</span>
-               <h2 className="text-white font-black italic">سجل المعاملات</h2>
+          <div className="card-base-lg overflow-hidden">
+            <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between">
+               <span className="bg-white/5 px-3 py-1.5 rounded-btn text-small font-black text-gray-500 uppercase tracking-widest">History</span>
+               <h2 className="text-section-title text-white font-black italic">سجل المعاملات</h2>
             </div>
 
             <div className="p-4">
@@ -204,7 +202,7 @@ export const Wallet = () => {
                   {transactions.map((transaction) => (
                     <div
                       key={transaction.id}
-                      className="bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 p-4 rounded-2xl flex items-center gap-4 transition-all"
+                      className="bg-white/[0.02] hover:bg-white/[0.04] border border-white/10 p-4 rounded-card flex items-center gap-4 transition-all"
                     >
                       <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-inner ${
                         transaction.type === 'credit' ? 'bg-green-500/10' : 'bg-red-500/10'
@@ -244,10 +242,9 @@ export const Wallet = () => {
             </div>
           </div>
 
-          <p className="text-center text-gray-600 text-[10px] mt-8 font-black uppercase tracking-[0.2em]">
+          <p className="text-center text-gray-600 text-small mt-section font-black uppercase tracking-[0.2em]">
             MauriPlay Financial Services • 2026
           </p>
-        </div>
       </div>
       <BottomNav />
     </div>

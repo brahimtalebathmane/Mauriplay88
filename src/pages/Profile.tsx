@@ -64,11 +64,9 @@ export const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white pb-20">
+    <div className="page-wrap">
       <Header />
-
-      <div className="pt-24 px-4 pb-12">
-        <div className="max-w-xl mx-auto space-y-6">
+      <div className="page-content-narrow space-y-section">
 
           {/* Back button */}
           <button
@@ -80,7 +78,7 @@ export const Profile = () => {
           </button>
           
           {/* بطاقة الهوية الرقمية */}
-          <div className="relative overflow-hidden bg-gradient-to-br from-[#0a0a0a] to-[#111] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl">
+          <div className="relative overflow-hidden card-base-lg bg-gradient-to-br from-card to-[#111] p-6 sm:p-8 shadow-card">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent" />
             
             <div className="flex items-center gap-6 mb-8">
@@ -106,7 +104,7 @@ export const Profile = () => {
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 mt-6">
               {/* حقل رقم الهاتف */}
               <div className="group flex items-center justify-between p-4 bg-black/40 border border-white/5 rounded-2xl hover:border-white/10 transition-all">
                 <div className="flex items-center gap-4">
@@ -236,7 +234,6 @@ export const Profile = () => {
               MauriPlay Digital Security v2.0
             </p>
           </div>
-        </div>
       </div>
       <BottomNav />
     </div>

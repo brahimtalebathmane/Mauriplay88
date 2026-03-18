@@ -20,15 +20,13 @@ export const Menu = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white pb-20">
+    <div className="page-wrap">
       <Header />
-
-      <div className="pt-24 px-4 pb-12">
-        <div className="max-w-xl mx-auto space-y-8">
+      <div className="page-content-narrow">
           {/* Back button */}
           <button
             onClick={() => navigate('/')}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-section"
           >
             <ArrowRight className="w-5 h-5" />
             <span>العودة للرئيسية</span>
@@ -38,7 +36,7 @@ export const Menu = () => {
             {/* Profile */}
             <button
               onClick={() => navigate('/profile')}
-              className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98]"
+              className="w-full flex items-center justify-between p-4 rounded-card bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98]"
             >
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-xl bg-white/10">
@@ -55,7 +53,7 @@ export const Menu = () => {
             {isAdmin && (
               <button
                 onClick={() => navigate('/admin')}
-                className="w-full flex items-center justify-between p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/40 hover:bg-cyan-500/20 transition-all active:scale-[0.98]"
+                className="w-full flex items-center justify-between p-4 rounded-card bg-cyan-500/10 border border-cyan-500/40 hover:bg-cyan-500/20 transition-all active:scale-[0.98]"
               >
                 <div className="flex items-center gap-3">
                   <div className="p-3 rounded-xl bg-cyan-500/20">
@@ -72,10 +70,10 @@ export const Menu = () => {
             {/* Terms & Conditions */}
             <button
               onClick={() => navigate('/terms-and-conditions')}
-              className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98]"
+              className="w-full flex items-center justify-between p-4 rounded-card bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98]"
             >
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-white/10">
+                <div className="p-3 rounded-input bg-white/10">
                   <FileText className="w-5 h-5 text-white" />
                 </div>
                 <div className="text-right">
@@ -88,10 +86,10 @@ export const Menu = () => {
             {/* Support */}
             <button
               onClick={handleSupport}
-              className="w-full flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98]"
+              className="w-full flex items-center justify-between p-4 rounded-card bg-white/5 border border-white/10 hover:bg-white/10 transition-all active:scale-[0.98]"
             >
               <div className="flex items-center gap-3">
-                <div className="p-3 rounded-xl bg-white/10">
+                <div className="p-3 rounded-input bg-white/10">
                   <MessageCircle className="w-5 h-5 text-white" />
                 </div>
                 <div className="text-right">
@@ -104,7 +102,7 @@ export const Menu = () => {
             {/* Logout */}
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-between p-4 rounded-2xl bg-red-500/5 border border-red-500/20 hover:bg-red-500/10 transition-all active:scale-[0.98]"
+              className="w-full flex items-center justify-between p-4 rounded-card bg-red-500/5 border border-red-500/20 hover:bg-red-500/10 transition-all active:scale-[0.98]"
             >
               <div className="flex items-center gap-3">
                 <div className="p-3 rounded-xl bg-red-500/20">
@@ -117,7 +115,6 @@ export const Menu = () => {
               </div>
             </button>
           </div>
-        </div>
       </div>
 
       <BottomNav />

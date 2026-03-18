@@ -142,30 +142,29 @@ export const MyPurchases = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-cyan-500/30 pb-20">
+    <div className="page-wrap selection:bg-cyan-500/30">
       <Header />
-      <div className="max-w-4xl mx-auto px-4 py-12">
-
+      <div className="page-content-wide">
         {/* Back button */}
         <button
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
+          className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-section"
         >
           <ArrowRight className="w-5 h-5" />
           <span>العودة للرئيسية</span>
         </button>
 
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-black mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-500">
+        <div className="text-center mb-section">
+          <h1 className="text-page-title sm:text-3xl font-black mb-2 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-500">
             سجل المشتريات
           </h1>
-          <p className="text-gray-500 uppercase tracking-[0.3em] text-xs font-bold">Your Digital Inventory</p>
+          <p className="text-gray-500 uppercase tracking-[0.3em] text-small font-bold">Your Digital Inventory</p>
         </div>
 
         {loading ? (
           <SkeletonList count={5} />
         ) : orders.length === 0 ? (
-          <div className="text-center py-20 bg-white/[0.02] rounded-[2rem] border border-dashed border-white/10">
+          <div className="text-center py-16 sm:py-20 card-base-lg rounded-card-lg border-dashed">
             <div className="bg-white/5 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl">
               <Ticket className="w-10 h-10 text-gray-600" />
             </div>
@@ -187,8 +186,8 @@ export const MyPurchases = () => {
               return (
                 <div
                   key={order.id}
-                  className={`relative group overflow-hidden rounded-[1.5rem] border transition-all duration-500 ${
-                    isExpanded ? 'border-cyan-500/30 bg-[#0c0c0c]' : 'border-white/5 bg-[#0a0a0a] hover:border-white/10'
+                  className={`relative group overflow-hidden rounded-card-lg border transition-all duration-500 ${
+                    isExpanded ? 'border-cyan-500/30 bg-cardHover' : 'card-base hover:border-white/15'
                   }`}
                 >
                   <div className="p-5 md:p-7">

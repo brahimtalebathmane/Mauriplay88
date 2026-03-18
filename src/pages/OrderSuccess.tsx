@@ -96,22 +96,20 @@ export const OrderSuccess = () => {
   const isApproved = order.status === 'approved';
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white pb-20">
+    <div className="page-wrap">
       <Header />
-
-      <div className="max-w-2xl mx-auto px-4 py-12 flex flex-col items-center">
-
+      <div className="page-content-standard flex flex-col items-center">
         {/* Back button */}
         <button
           onClick={() => navigate(-1)}
-          className="self-start flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6"
+          className="self-start flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-section"
         >
           <ArrowRight className="w-5 h-5" />
           <span>العودة</span>
         </button>
         
         {/* الحالة والأيقونة */}
-        <div className="text-center mb-10 animate-in zoom-in duration-500">
+        <div className="text-center mb-8 sm:mb-10 animate-in zoom-in duration-500">
           <div className="relative mb-6">
             {isPending ? (
               <div className="relative">
@@ -126,10 +124,10 @@ export const OrderSuccess = () => {
             )}
           </div>
           
-          <h1 className="text-4xl font-black mb-3">
+          <h1 className="text-page-title sm:text-3xl font-black mb-3">
             {isPending ? 'طلبك قيد الانتظار' : 'تم الشراء بنجاح!'}
           </h1>
-          <p className="text-gray-400 text-lg font-medium">
+          <p className="text-gray-400 text-body font-medium">
             {isPending
               ? 'نقوم بمراجعة عملية الدفع حالياً، ترقب التحديث'
               : 'مبروك! كود التفعيل الخاص بك جاهز للاستخدام'
@@ -138,8 +136,8 @@ export const OrderSuccess = () => {
         </div>
 
         {/* تفاصيل المنتج */}
-        <div className="w-full bg-[#0a0a0a] border border-white/5 rounded-[2.5rem] p-8 mb-8 shadow-2xl">
-          <div className="flex items-center gap-6 mb-8 border-b border-white/5 pb-6">
+        <div className="w-full card-base-lg p-6 sm:p-8 section-gap shadow-card">
+          <div className="flex items-center gap-4 sm:gap-6 mb-6 sm:mb-8 border-b border-white/10 pb-6">
             <div className="w-20 h-20 bg-black border border-white/10 rounded-2xl p-3 shadow-inner flex items-center justify-center overflow-hidden">
               <ProductLogo
                 logoUrl={order.product?.product_logo_url ?? order.product?.logo_url}

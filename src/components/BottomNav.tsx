@@ -14,17 +14,6 @@ export const BottomNav = () => {
     return location.pathname.startsWith(path);
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-    setMenuOpen(false);
-  };
-
-  const handleSupport = () => {
-    window.open('https://wa.me/22249827331', '_blank');
-    setMenuOpen(false);
-  };
-
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 md:z-50">
       {/* Blur background */}

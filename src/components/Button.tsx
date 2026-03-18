@@ -39,12 +39,12 @@ export const Button = ({
     }
   };
 
-  const baseClasses = 'w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = 'w-full min-h-[48px] py-3 px-5 rounded-btn font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
 
   const variantClasses = {
-    primary: 'bg-white text-black hover:bg-gray-200',
-    secondary: 'bg-gray-800 text-white hover:bg-gray-700 border border-gray-700',
-    danger: 'bg-red-600 text-white hover:bg-red-700'
+    primary: 'bg-white text-black hover:bg-gray-200 active:scale-[0.99]',
+    secondary: 'bg-white/10 text-white border border-white/20 hover:bg-white/15',
+    danger: 'bg-red-600 text-white hover:bg-red-700 active:scale-[0.99]'
   };
 
   return (

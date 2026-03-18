@@ -84,17 +84,16 @@ export const WalletPurchaseSuccess = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white pb-20">
+    <div className="page-wrap">
       <Header />
-
-      <div className="max-w-2xl mx-auto px-4 py-12 flex flex-col items-center">
+      <div className="page-content-standard flex flex-col items-center">
         {loading ? (
-          <div className="w-full bg-[#0a0a0a] border border-white/5 rounded-[2.5rem] p-8 mb-6 shadow-2xl text-center">
+          <div className="w-full card-base-lg p-8 section-gap shadow-card text-center">
             <p className="text-gray-400 mb-2">جاري تحميل بيانات الطلب...</p>
           </div>
         ) : hasState && code ? (
           <>
-            <div className="text-center mb-10 animate-in zoom-in duration-500">
+            <div className="text-center mb-8 sm:mb-10 animate-in zoom-in duration-500">
               <div className="relative mb-6">
                 <div className="absolute inset-0 bg-green-500/20 blur-3xl rounded-full" />
                 <CheckCircle className="w-24 h-24 text-green-500 mx-auto relative shadow-2xl" />
@@ -102,7 +101,7 @@ export const WalletPurchaseSuccess = () => {
               <h1 className="text-4xl font-black mb-3">تمت عملية الشراء بنجاح</h1>
             </div>
 
-            <div className="w-full bg-[#0a0a0a] border border-white/5 rounded-[2.5rem] p-8 mb-6 shadow-2xl">
+            <div className="w-full card-base-lg p-6 sm:p-8 section-gap shadow-card">
               <div className="relative group mb-6">
                 <div className="absolute -inset-1 bg-gradient-to-r from-green-500 to-cyan-500 rounded-3xl blur opacity-20 group-hover:opacity-40 transition duration-500" />
                 <div className="relative bg-black rounded-[1.5rem] border border-white/10 p-6 flex flex-col items-center gap-4">
@@ -147,7 +146,7 @@ export const WalletPurchaseSuccess = () => {
             </div>
           </>
         ) : (
-          <div className="w-full bg-[#0a0a0a] border border-white/5 rounded-[2.5rem] p-8 mb-6 shadow-2xl text-center">
+          <div className="w-full card-base-lg p-8 section-gap shadow-card text-center">
             <h1 className="text-2xl font-black mb-4">لا توجد بيانات للطلب</h1>
             <p className="text-gray-400 mb-6">
               تعذر العثور على تفاصيل عملية الشراء. يمكنك العودة للمنتجات وإعادة المحاولة.
@@ -157,7 +156,7 @@ export const WalletPurchaseSuccess = () => {
 
         <button
           onClick={() => navigate('/')}
-          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 py-4 rounded-2xl font-bold hover:opacity-90 transition-all"
+          className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-cyan-600 to-blue-600 py-4 rounded-card-lg font-bold hover:opacity-90 transition-all min-h-[48px]"
         >
           <Check className="w-5 h-5" />
           تم
