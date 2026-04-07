@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { User } from '../types';
 import { normalizeUser } from '../utils/auth';
+import { supabase } from '../lib/supabase';
 
 interface StoreState {
   isLoggedIn: boolean;
@@ -26,6 +27,7 @@ export const useStore = create<StoreState>()(
         set({ user: normalizedUser, isLoggedIn: isLoggedIn && !!normalizedUser });
       },
       logout: () => {
+        void supabase.auth.signOut();
         localStorage.removeItem('pending_phone');
         localStorage.removeItem('temp_pin');
         localStorage.removeItem('last_active_time');

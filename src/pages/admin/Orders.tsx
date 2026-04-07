@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useStore } from '../../store/useStore';
 import { Button } from '../../components/Button';
@@ -14,13 +14,9 @@ export const Orders = () => {
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('pending');
   const [selectedReceipt, setSelectedReceipt] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadOrders();
-    const unsubscribe = subscribeToOrders();
-    return unsubscribe;
-  }, [filter]);
+  const loadOrdersRef = useRef<() => Promise<void>>(async () => {});
 
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     if (!user?.id) {
       setLoading(false);
       return;
@@ -66,11 +62,17 @@ export const Orders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, filter]);
 
-  const subscribeToOrders = () => {
+  loadOrdersRef.current = loadOrders;
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    void loadOrders();
+
     const channel = supabase
-      .channel('admin-orders')
+      .channel(`admin-orders-${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -79,15 +81,33 @@ export const Orders = () => {
           table: 'orders',
         },
         () => {
-          loadOrders();
+          void loadOrdersRef.current();
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'inventory',
+        },
+        () => {
+          void loadOrdersRef.current();
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          void loadOrdersRef.current();
+        }
+        if (status === 'CHANNEL_ERROR') {
+          void loadOrdersRef.current();
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [user?.id, filter, loadOrders]);
 
   const handleApprove = async (orderId: string) => {
     try {

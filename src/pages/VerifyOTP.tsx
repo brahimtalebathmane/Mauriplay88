@@ -7,6 +7,7 @@ import { useStore } from '../store/useStore';
 import { showToast } from '../components/Toast';
 import { formatPhoneForDisplay } from '../utils/phoneNumber';
 import { MessageSquare, RefreshCcw, ArrowRight, ShieldCheck } from 'lucide-react';
+import { establishSupabaseAuthSession } from '../lib/session';
 
 export const VerifyOTP = () => {
   const navigate = useNavigate();
@@ -89,6 +90,10 @@ export const VerifyOTP = () => {
 
         if (data.user) {
           setUser(data.user);
+          const tempPin = localStorage.getItem('temp_pin');
+          if (tempPin) {
+            await establishSupabaseAuthSession(phone, tempPin);
+          }
           localStorage.removeItem('temp_pin');
 
           setTimeout(() => {
@@ -104,6 +109,7 @@ export const VerifyOTP = () => {
 
             if (loginData?.success) {
               setUser(loginData.user);
+              await establishSupabaseAuthSession(phone, tempPin);
               localStorage.removeItem('temp_pin');
 
               setTimeout(() => {

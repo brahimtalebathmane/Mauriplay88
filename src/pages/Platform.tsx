@@ -148,9 +148,6 @@ export const PlatformPage = () => {
             </span>
             العروض المتوفرة
           </h2>
-          <div className="bg-white/5 px-3 py-1.5 rounded-btn text-small font-bold text-gray-500 uppercase tracking-widest">
-             {products.length} Products
-          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4">
@@ -189,12 +186,14 @@ export const PlatformPage = () => {
                     <div className="text-lg font-bold text-gray-200 group-hover:text-white transition-colors mb-1">
                       {product.name}
                     </div>
-                    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold ${
-                      product.stock_count > 0 
-                      ? 'bg-green-500/10 text-green-500 border border-green-500/20' 
-                      : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                    }`}>
-                      {product.stock_count > 0 ? `متوفر: ${product.stock_count}` : 'نفذت الكمية'}
+                    <div
+                      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold ${
+                        product.stock_count > 0
+                          ? 'bg-green-500/10 text-green-400 border border-green-500/25'
+                          : 'bg-red-500/10 text-red-400 border border-red-500/25'
+                      }`}
+                    >
+                      {product.stock_count > 0 ? 'Available' : 'Out of Stock'}
                     </div>
                   </div>
 

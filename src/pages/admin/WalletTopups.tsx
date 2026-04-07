@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useStore } from '../../store/useStore';
 import { Button } from '../../components/Button';
@@ -38,12 +38,7 @@ export const WalletTopups = () => {
   const [notice, setNotice] = useState('');
   const [originalNotice, setOriginalNotice] = useState('');
 
-  useEffect(() => {
-    loadTopups();
-    loadNotice();
-    const unsubscribe = subscribeToTopups();
-    return unsubscribe;
-  }, [filter, searchPhone]);
+  const loadTopupsRef = useRef<() => Promise<void>>(async () => {});
 
   const loadNotice = async () => {
     try {
@@ -91,7 +86,7 @@ export const WalletTopups = () => {
     setEditingNotice(false);
   };
 
-  const loadTopups = async () => {
+  const loadTopups = useCallback(async () => {
     if (!user?.id) {
       setLoading(false);
       return;
@@ -129,11 +124,21 @@ export const WalletTopups = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id, filter, searchPhone]);
 
-  const subscribeToTopups = () => {
+  loadTopupsRef.current = loadTopups;
+
+  useEffect(() => {
+    void loadNotice();
+  }, []);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    void loadTopups();
+
     const channel = supabase
-      .channel('admin-wallet-topups')
+      .channel(`admin-wallet-topups-${user.id}`)
       .on(
         'postgres_changes',
         {
@@ -142,15 +147,19 @@ export const WalletTopups = () => {
           table: 'wallet_topups',
         },
         () => {
-          loadTopups();
+          void loadTopupsRef.current();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED' || status === 'CHANNEL_ERROR') {
+          void loadTopupsRef.current();
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [user?.id, filter, searchPhone, loadTopups]);
 
   const handleApprove = async (topupId: string) => {
     try {

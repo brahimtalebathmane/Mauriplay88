@@ -51,11 +51,21 @@ async function waitForServiceWorkerReady(): Promise<void> {
  */
 export async function triggerNotification(payload: NotificationPayload): Promise<void> {
   const baseUrl = payload.base_url ?? getBaseUrl();
+  const body = { ...payload, base_url: baseUrl };
   try {
     await waitForServiceWorkerReady();
-    await supabase.functions.invoke('send-notification', {
-      body: { ...payload, base_url: baseUrl },
-    });
+    const attempt = async () =>
+      supabase.functions.invoke('send-notification', {
+        body,
+      });
+    let { error } = await attempt();
+    if (error) {
+      await new Promise((r) => setTimeout(r, 400));
+      ({ error } = await attempt());
+    }
+    if (error) {
+      console.warn('[Notifications] Failed to trigger:', payload.type, error);
+    }
   } catch (e) {
     console.warn('[Notifications] Failed to trigger:', payload.type, e);
   }

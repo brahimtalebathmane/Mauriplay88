@@ -9,8 +9,8 @@ import { showToast } from '../components/Toast';
 import { Wallet, ShoppingBag, TrendingUp } from 'lucide-react';
 
 interface PlatformWithStats extends Platform {
-  product_count: number;
   total_stock: number;
+  has_products: boolean;
 }
 
 export const Home = () => {
@@ -91,8 +91,8 @@ export const Home = () => {
 
         return {
           ...platform,
-          product_count: productIds.length,
           total_stock: totalStock,
+          has_products: productIds.length > 0,
         };
       });
 
@@ -166,11 +166,6 @@ export const Home = () => {
             <ShoppingBag className="w-6 h-6 text-cyan-500 flex-shrink-0" />
             المنصات المتاحة
           </h2>
-          {!loading && platforms.length > 0 && (
-            <div className="bg-white/5 px-3 py-1.5 rounded-btn text-small font-bold text-gray-400 uppercase">
-              {platforms.length} {platforms.length === 1 ? 'Platform' : 'Platforms'}
-            </div>
-          )}
         </div>
 
         {loading ? (
@@ -217,7 +212,7 @@ export const Home = () => {
                     </div>
                   )}
 
-                  {platform.total_stock === 0 && platform.product_count > 0 && (
+                  {platform.total_stock === 0 && platform.has_products && (
                     <div className="absolute top-3 left-3 z-20 bg-red-500/90 backdrop-blur-sm px-2.5 py-1 rounded-full">
                       <span className="text-[10px] font-black text-white uppercase tracking-wide">نفذت الكمية</span>
                     </div>
@@ -225,14 +220,9 @@ export const Home = () => {
 
                   <div className="absolute bottom-0 left-0 right-0 z-20 p-4">
                     <div className="text-center">
-                      <h3 className="text-white font-black text-base mb-1 drop-shadow-lg">
+                      <h3 className="text-white font-black text-base drop-shadow-lg">
                         {platform.name}
                       </h3>
-                      {platform.product_count > 0 && (
-                        <div className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider">
-                          {platform.product_count} {platform.product_count === 1 ? 'منتج' : 'منتجات'}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>

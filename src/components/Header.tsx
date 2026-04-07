@@ -6,15 +6,23 @@ export const Header = () => {
 
   return (
     <header className="bg-card border-b border-white/10 sticky top-0 z-40">
-      <div className="max-w-content-max mx-auto px-page-x h-14 flex items-center justify-between">
-        <div className="w-10" />
+      <div className="max-w-content-max mx-auto px-page-x h-14 flex items-center justify-between gap-3">
+        <div className="w-10 shrink-0" aria-hidden />
 
-        <img
-          src="https://i.postimg.cc/VJ87tfYs/Logo.png"
-          alt="MauriPlay"
-          className="h-9 cursor-pointer"
+        <button
+          type="button"
           onClick={() => navigate('/')}
-        />
+          className="flex-1 flex min-w-0 items-center justify-center gap-2.5 group"
+        >
+          <img
+            src="https://i.postimg.cc/VJ87tfYs/Logo.png"
+            alt=""
+            className="h-9 w-auto shrink-0"
+          />
+          <span className="text-[1.05rem] sm:text-lg font-black tracking-tight text-white/95 truncate group-hover:text-cyan-100 transition-colors">
+            MauriPlay
+          </span>
+        </button>
 
         <button
           onClick={() => navigate('/profile')}

@@ -8,6 +8,7 @@ import { useStore } from '../store/useStore';
 import { showToast } from '../components/Toast';
 import { sanitizePhoneNumber, validateMauritanianPhone } from '../utils/phoneNumber';
 import { logger } from '../utils/logger';
+import { establishSupabaseAuthSession } from '../lib/session';
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -47,6 +48,7 @@ export const Login = () => {
       if (data.success) {
         logger.success('Login', 'Login successful', { userId: data.user.id, role: data.user.role });
         setUser(data.user);
+        void establishSupabaseAuthSession(fullPhone, pin);
         showToast('تم تسجيل الدخول بنجاح', 'success');
 
         if (data.user.role === 'admin') {

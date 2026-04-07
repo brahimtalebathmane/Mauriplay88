@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '../components/Header';
 import { BottomNav } from '../components/BottomNav';
@@ -17,16 +17,10 @@ export const MyPurchases = () => {
   const [orders, setOrders] = useState<OrderWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+  const pendingPollRef = useRef(false);
+  const loadOrdersRef = useRef<() => Promise<void>>(async () => {});
 
-  useEffect(() => {
-    if (user) {
-      loadOrders();
-      const unsubscribe = subscribeToOrders();
-      return unsubscribe;
-    }
-  }, [user]);
-
-  const loadOrders = async () => {
+  const loadOrders = useCallback(async () => {
     if (!user?.id) {
       setLoading(false);
       return;
@@ -88,20 +82,31 @@ export const MyPurchases = () => {
         },
       }));
 
+      pendingPollRef.current = ordersWithDetails.some((o) => o.status === 'pending');
       setOrders(ordersWithDetails);
     } catch (error: any) {
       console.error('MyPurchases load error:', error);
       showToast('فشل تحميل المشتريات', 'error');
+      pendingPollRef.current = false;
       setOrders([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
 
-  const subscribeToOrders = () => {
-    if (!user?.id) return () => {};
+  useEffect(() => {
+    if (!user?.id) return;
+    loadOrders();
+  }, [user?.id, loadOrders]);
+
+  loadOrdersRef.current = loadOrders;
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channelName = `user-orders-${user.id}`;
     const channel = supabase
-      .channel('orders-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -111,15 +116,41 @@ export const MyPurchases = () => {
           filter: `user_id=eq.${user.id}`,
         },
         () => {
-          loadOrders();
+          void loadOrdersRef.current();
         }
       )
-      .subscribe();
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'inventory',
+        },
+        () => {
+          void loadOrdersRef.current();
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.warn('[MyPurchases] Realtime channel error, retrying load');
+          void loadOrdersRef.current();
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const id = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      if (!pendingPollRef.current) return;
+      void loadOrdersRef.current();
+    }, 2500);
+    return () => window.clearInterval(id);
+  }, [user?.id]);
 
   const toggleExpand = (orderId: string) => {
     setExpandedOrderId(expandedOrderId === orderId ? null : orderId);
