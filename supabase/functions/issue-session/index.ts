@@ -6,10 +6,17 @@
 import { create, getNumericDate } from "https://deno.land/x/djwt@v3.0.1/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 
+const allowedOrigins = new Set([
+  "https://mauriplay.store",
+  "https://www.mauriplay.store",
+]);
+
 function corsHeaders(req: Request): Record<string, string> {
   const origin = req.headers.get("Origin") ?? "";
   const allow =
     origin.includes("localhost") || origin.includes("127.0.0.1")
+      ? origin
+      : allowedOrigins.has(origin)
       ? origin
       : "https://mauriplay.store";
   return {
