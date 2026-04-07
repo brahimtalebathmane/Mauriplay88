@@ -5,6 +5,7 @@ import { Button } from '../../components/Button';
 import { SkeletonList } from '../../components/LoadingScreen';
 import { showToast } from '../../components/Toast';
 import { notifyUserOrderApproved } from '../../utils/notifications';
+import { logger } from '../../utils/logger';
 import { CheckCircle, XCircle, Eye } from 'lucide-react';
 
 export const Orders = () => {
@@ -95,11 +96,13 @@ export const Orders = () => {
           void loadOrdersRef.current();
         }
       )
-      .subscribe((status) => {
+      .subscribe((status, err) => {
         if (status === 'SUBSCRIBED') {
+          logger.debug('AdminOrders', 'realtime subscribed');
           void loadOrdersRef.current();
         }
-        if (status === 'CHANNEL_ERROR') {
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          logger.warn('AdminOrders', `realtime ${status}`, err);
           void loadOrdersRef.current();
         }
       });

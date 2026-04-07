@@ -9,9 +9,22 @@ const allowedOrigins = new Set([
   "https://www.mauriplay.store",
 ]);
 
+/** Match issue-session: allow local dev and preview deploys so functions.invoke does not fail CORS. */
+function resolveCorsOrigin(requestOrigin: string): string {
+  if (allowedOrigins.has(requestOrigin)) return requestOrigin;
+  if (
+    requestOrigin.includes("localhost") ||
+    requestOrigin.includes("127.0.0.1") ||
+    /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(requestOrigin)
+  ) {
+    return requestOrigin;
+  }
+  return "https://mauriplay.store";
+}
+
 function buildCorsHeaders(req: Request, forOptions = false): Record<string, string> {
   const requestOrigin = req.headers.get("Origin") ?? "";
-  const allowOrigin = allowedOrigins.has(requestOrigin) ? requestOrigin : "https://mauriplay.store";
+  const allowOrigin = resolveCorsOrigin(requestOrigin);
 
   const headers: Record<string, string> = {
     "Access-Control-Allow-Origin": allowOrigin,

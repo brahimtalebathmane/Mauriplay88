@@ -48,7 +48,14 @@ export const Login = () => {
       if (data.success) {
         logger.success('Login', 'Login successful', { userId: data.user.id, role: data.user.role });
         setUser(data.user);
-        void establishSupabaseAuthSession(fullPhone, pin);
+        const sessionOk = await establishSupabaseAuthSession(fullPhone, pin);
+        if (!sessionOk) {
+          logger.warn('Login', 'issue-session failed — realtime and push triggers may not work until re-login');
+          showToast(
+            'تنبيه: فشل ربط الجلسة الآمنة. أعد تسجيل الدخول أو حدّث الصفحة إذا استمرت مشكلة التحديثات الفورية.',
+            'error'
+          );
+        }
         showToast('تم تسجيل الدخول بنجاح', 'success');
 
         if (data.user.role === 'admin') {

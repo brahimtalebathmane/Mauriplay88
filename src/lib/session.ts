@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { logger } from '../utils/logger';
 
 /**
  * After phone+PIN login, mints a project JWT via Edge Function so Realtime RLS applies.
@@ -14,11 +15,11 @@ export async function establishSupabaseAuthSession(phoneNumber: string, pin: str
   });
 
   if (error) {
-    console.warn('[session] issue-session invoke error', error);
+    logger.warn('session', 'issue-session invoke error', error);
     return false;
   }
   if (!data?.success || !data.access_token) {
-    console.warn('[session] issue-session rejected', data?.message);
+    logger.warn('session', 'issue-session rejected', { message: data?.message });
     return false;
   }
 
@@ -27,8 +28,9 @@ export async function establishSupabaseAuthSession(phoneNumber: string, pin: str
     refresh_token: data.refresh_token ?? data.access_token,
   });
   if (sessionError) {
-    console.warn('[session] setSession failed', sessionError);
+    logger.warn('session', 'setSession failed', sessionError);
     return false;
   }
+  logger.debug('session', 'Supabase JWT established for Realtime / Edge Functions');
   return true;
 }

@@ -4,6 +4,7 @@
  */
 
 import { supabase } from '../lib/supabase';
+import { logger } from './logger';
 
 const getBaseUrl = () => {
   if (typeof window !== 'undefined') return window.location.origin;
@@ -44,30 +45,55 @@ async function waitForServiceWorkerReady(): Promise<void> {
   }
 }
 
+function isInvokeFailure(
+  data: unknown,
+  error: { message?: string } | null
+): boolean {
+  if (error) return true;
+  if (data && typeof data === 'object' && 'success' in data && (data as { success?: boolean }).success === false) {
+    return true;
+  }
+  return false;
+}
+
+const RETRY_DELAYS_MS = [0, 400, 1200, 2800];
+
 /**
  * Fire-and-forget: invoke Edge Function to send OneSignal notification.
  * Waits for service worker ready before sending so push can show in background.
- * Does not throw; failures are logged only.
+ * Retries on transport errors or JSON { success: false }. Does not throw.
  */
 export async function triggerNotification(payload: NotificationPayload): Promise<void> {
   const baseUrl = payload.base_url ?? getBaseUrl();
   const body = { ...payload, base_url: baseUrl };
   try {
     await waitForServiceWorkerReady();
-    const attempt = async () =>
-      supabase.functions.invoke('send-notification', {
-        body,
+    let lastError: unknown;
+    let lastData: unknown;
+    for (let i = 0; i < RETRY_DELAYS_MS.length; i++) {
+      if (RETRY_DELAYS_MS[i] > 0) {
+        await new Promise((r) => setTimeout(r, RETRY_DELAYS_MS[i]));
+      }
+      const { data, error } = await supabase.functions.invoke('send-notification', { body });
+      lastData = data;
+      lastError = error;
+      if (!isInvokeFailure(data, error)) {
+        logger.debug('Notifications', 'send-notification ok', { type: payload.type, attempt: i + 1 });
+        return;
+      }
+      logger.warn('Notifications', 'send-notification attempt failed', {
+        type: payload.type,
+        attempt: i + 1,
+        error,
+        data,
       });
-    let { error } = await attempt();
-    if (error) {
-      await new Promise((r) => setTimeout(r, 400));
-      ({ error } = await attempt());
     }
-    if (error) {
-      console.warn('[Notifications] Failed to trigger:', payload.type, error);
-    }
+    logger.error('Notifications', `send-notification exhausted retries (${payload.type})`, {
+      lastError,
+      lastData,
+    });
   } catch (e) {
-    console.warn('[Notifications] Failed to trigger:', payload.type, e);
+    logger.error('Notifications', `send-notification threw (${payload.type})`, e);
   }
 }
 

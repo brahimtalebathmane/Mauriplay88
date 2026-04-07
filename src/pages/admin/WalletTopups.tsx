@@ -5,6 +5,7 @@ import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { showToast } from '../../components/Toast';
 import { notifyUserTopupApproved } from '../../utils/notifications';
+import { logger } from '../../utils/logger';
 import { CheckCircle, XCircle, Eye, Search, CreditCard as Edit2, Save, X } from 'lucide-react';
 
 interface WalletTopup {
@@ -150,8 +151,13 @@ export const WalletTopups = () => {
           void loadTopupsRef.current();
         }
       )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED' || status === 'CHANNEL_ERROR') {
+      .subscribe((status, err) => {
+        if (status === 'SUBSCRIBED') {
+          logger.debug('AdminWalletTopups', 'realtime subscribed');
+          void loadTopupsRef.current();
+        }
+        if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          logger.warn('AdminWalletTopups', `realtime ${status}`, err);
           void loadTopupsRef.current();
         }
       });
