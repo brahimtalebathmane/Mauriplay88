@@ -21,3 +21,7 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Cursor — ignore local IDE state; keep shared MCP config for the team
+.cursor/*
+!.cursor/mcp.json
