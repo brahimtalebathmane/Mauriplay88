@@ -6,6 +6,7 @@ import { OneSignalProvider } from './components/OneSignalProvider';
 import { EnableNotificationsPrompt } from './components/EnableNotificationsPrompt';
 
 import { Login } from './pages/Login';
+import { ForgotPassword } from './pages/ForgotPassword';
 import { Register } from './pages/Register';
 import { VerifyOTP } from './pages/VerifyOTP';
 import { Home } from './pages/Home';
@@ -55,6 +56,7 @@ function App() {
         <EnableNotificationsPrompt />
         <Routes>
         <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+        <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
         <Route path="/verify-otp" element={<VerifyOTP />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />

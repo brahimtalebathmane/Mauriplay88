@@ -146,6 +146,16 @@ export const Login = () => {
             autoComplete="current-password"
           />
 
+          <div className="text-right">
+            <button
+              type="button"
+              onClick={() => navigate('/forgot-password')}
+              className="text-sm text-cyan-400 hover:text-cyan-300 hover:underline"
+            >
+              نسيت الرمز السري؟
+            </button>
+          </div>
+
           <Button type="submit" loading={loading}>
             تسجيل الدخول
           </Button>
