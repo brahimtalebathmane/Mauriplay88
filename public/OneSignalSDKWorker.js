@@ -1,5 +1,6 @@
-// OneSignal Web SDK v16 service worker
-// Must be served from the origin root as /OneSignalSDKWorker.js
+// OneSignal Web SDK v16 service worker (merged with MauriPlay PWA caching).
+// Public URL: https://<your-domain>/OneSignalSDKWorker.js
+// In OneSignal.init(), use serviceWorkerPath: "OneSignalSDKWorker.js" (no leading slash; see OneSignal docs).
 // See: https://documentation.onesignal.com/docs/onesignal-service-worker
 
 /* eslint-disable no-undef */
@@ -7,7 +8,6 @@ importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js');
 
 // ---- MauriPlay PWA offline caching (merged into OneSignal SW) ----
 
-const CACHE_NAME = 'mauriplay-v6.1';
 const STATIC_CACHE = 'mauriplay-static-v6.1';
 const RUNTIME_CACHE = 'mauriplay-runtime-v6.1';
 

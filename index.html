@@ -53,8 +53,9 @@
             // This affects only the visible bell icon; push functionality remains intact.
             notifyButton: { enable: false },
             allowLocalhostAsSecureOrigin: true,
-            // Must be absolute paths so it works from any SPA route and on iOS PWA.
-            serviceWorkerPath: "/OneSignalSDKWorker.js",
+            // Relative path from site root, NO leading slash (OneSignal Web SDK v16 docs).
+            // A leading "/" can break URL resolution and yield https://onesignalsdkworker.js (invalid origin).
+            serviceWorkerPath: "OneSignalSDKWorker.js",
             serviceWorkerParam: { scope: "/" }
           });
           window.__oneSignalInitOk = true;
