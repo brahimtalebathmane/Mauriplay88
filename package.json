@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "cap:sync": "npx cap sync",
-    "cap:add:android": "npx cap add android"
+    "cap:add:android": "npx cap add android",
+    "whatsapp-otp": "node whatsapp-otp-service/index.js"
   },
   "dependencies": {
     "@capacitor/android": "^8.2.0",

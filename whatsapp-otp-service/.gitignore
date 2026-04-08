@@ -1,0 +1,6 @@
+pairing-qr.png
+
+# Never commit secrets / local state
+auth/*
+!auth/.gitkeep
+node_modules/
