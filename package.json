@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.app.json",
     "cap:sync": "npx cap sync",
     "cap:add:android": "npx cap add android",
-    "whatsapp-otp": "node whatsapp-otp-service/index.js"
+    "whatsapp-otp": "node whatsapp-otp-service/index.js",
+    "test:notification": "node scripts/test-send-notification.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.2.0",
