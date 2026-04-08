@@ -75,6 +75,28 @@ function oneSignalHasMeaningfulErrors(data: unknown): boolean {
   return true;
 }
 
+/**
+ * HTTP 200 with empty id: no message created — usually unknown external_id or no opted-in push.
+ * OneSignal may return `invalid_aliases` alone or alongside other error keys with empty values
+ * (e.g. `invalid_player_ids: []`). Treat those as "no eligible recipient", not a hard failure.
+ */
+function oneSignalIndicatesNoEligiblePush(data: unknown): boolean {
+  if (!data || typeof data !== "object") return false;
+  const errors = (data as Record<string, unknown>).errors;
+  if (!errors || typeof errors !== "object" || Array.isArray(errors)) return false;
+  const errObj = errors as Record<string, unknown>;
+  if (!("invalid_aliases" in errObj)) return false;
+  for (const key of Object.keys(errObj)) {
+    if (key === "invalid_aliases") continue;
+    const v = errObj[key];
+    if (v == null) continue;
+    if (Array.isArray(v) && v.length === 0) continue;
+    if (typeof v === "object" && !Array.isArray(v) && Object.keys(v as object).length === 0) continue;
+    return false;
+  }
+  return true;
+}
+
 function oneSignalErrorMessage(data: unknown): string | null {
   if (!data || typeof data !== "object") return null;
   const o = data as Record<string, unknown>;
@@ -88,16 +110,30 @@ function oneSignalErrorMessage(data: unknown): string | null {
       if (typeof msg === "string") return msg;
     }
   }
-  if (errors && typeof errors === "object") {
-    const entries = Object.entries(errors as Record<string, unknown>);
-    if (entries.length > 0) {
-      const [, v] = entries[0];
-      if (typeof v === "string") return v;
-      if (Array.isArray(v) && typeof v[0] === "string") return v[0];
+  if (errors && typeof errors === "object" && !Array.isArray(errors)) {
+    const inv = (errors as Record<string, unknown>).invalid_aliases;
+    if (inv && typeof inv === "object" && inv !== null && "external_id" in inv) {
+      const ids = (inv as { external_id?: unknown }).external_id;
+      if (Array.isArray(ids)) {
+        return `invalid_aliases.external_id: ${ids.join(", ")} (user not in OneSignal or no opted-in Web Push)`;
+      }
+    }
+    try {
+      const s = JSON.stringify(errors);
+      if (s !== "{}") return s.length > 500 ? `${s.slice(0, 500)}…` : s;
+    } catch {
+      /* ignore */
     }
   }
   if (typeof o.message === "string") return o.message;
   return null;
+}
+
+function normalizeNotificationId(data: unknown): string | null {
+  const raw = (data as { id?: unknown })?.id;
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  return s.length > 0 ? s : null;
 }
 
 function buildAdminPayload(type: NotificationType, baseUrl: string) {
@@ -279,11 +315,35 @@ Deno.serve(async (req: Request) => {
 
     // HTTP 200: OneSignal may omit id when no message was created (no push subscriptions for target).
     // See: https://documentation.onesignal.com/reference/create-notification — "If no id is returned..."
-    const rawId = (data as { id?: unknown })?.id;
-    const id = typeof rawId === "string" && rawId.length > 0 ? rawId : null;
+    const id = normalizeNotificationId(data);
+
+    if (id) {
+      return new Response(JSON.stringify({ success: true, id, status: res.status, request_id: requestId }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // invalid_aliases (+ optional empty error slots): no opted-in push for this external_id — not worth retrying.
+    if (oneSignalIndicatesNoEligiblePush(data)) {
+      console.warn("[send-notification] invalid_aliases (no eligible subscription)", { requestId, details: data });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          skipped: true,
+          reason: "external_id_invalid_or_no_push_subscription",
+          status: res.status,
+          request_id: requestId,
+          details: data,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const meaningfulErrors = oneSignalHasMeaningfulErrors(data);
 
-    if (!id && meaningfulErrors) {
+    if (meaningfulErrors) {
       console.error("[send-notification] OneSignal returned errors in body", { requestId, details: data });
       return new Response(
         JSON.stringify({
@@ -300,24 +360,18 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    if (!id) {
-      return new Response(
-        JSON.stringify({
-          success: true,
-          skipped: true,
-          reason: "no_push_recipients",
-          status: res.status,
-          request_id: requestId,
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        }
-      );
-    }
-
-    return new Response(JSON.stringify({ success: true, id, status: res.status, request_id: requestId }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        skipped: true,
+        reason: "no_push_recipients",
+        status: res.status,
+        request_id: requestId,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
   } catch (error: unknown) {
     console.error("[send-notification] Unhandled error", error);
     return new Response(
