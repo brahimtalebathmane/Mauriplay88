@@ -21,10 +21,12 @@ Deno.serve(async (req: Request) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    const ultraMsgToken = Deno.env.get("ULTRAMSG_TOKEN");
-    const ultraMsgInstanceId = Deno.env.get("ULTRAMSG_INSTANCE_ID") || "instance164290";
+    // Your own Baileys WhatsApp service (Node) must be deployed somewhere that stays running.
+    // Example: https://your-whatsapp-otp-service.onrender.com
+    const whatsappServiceUrl = Deno.env.get("WHATSAPP_OTP_SERVICE_URL");
+    const whatsappServiceToken = Deno.env.get("WHATSAPP_OTP_SERVICE_TOKEN"); // optional
 
-    if (!supabaseUrl || !supabaseServiceKey || !ultraMsgToken) {
+    if (!supabaseUrl || !supabaseServiceKey || !whatsappServiceUrl) {
       throw new Error("Missing environment variables");
     }
 
@@ -63,40 +65,28 @@ Deno.serve(async (req: Request) => {
 
     const whatsappNumber = phone_number.replace("+", "");
 
-    const message =
-      `رمز التحقق الخاص بك في MauriPlay هو: ${codeData.code}\n\n` +
-      `الرمز صالح لمدة 5 دقائق.`;
-
-    const ultraMsgUrl = `https://api.ultramsg.com/${ultraMsgInstanceId}/messages/chat`;
-
-    const whatsappResponse = await fetch(ultraMsgUrl, {
+    // Send through your Baileys service (it will send: "Your verification code is: 1234")
+    const sendUrl = `${whatsappServiceUrl.replace(/\\/$/, "")}/send-otp`;
+    const whatsappResponse = await fetch(sendUrl, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        ...(whatsappServiceToken ? { "Authorization": `Bearer ${whatsappServiceToken}` } : {}),
       },
       body: JSON.stringify({
-        token: ultraMsgToken,
-        to: whatsappNumber,
-        body: message
+        phone: whatsappNumber,
+        otp: String(codeData.code),
       })
     });
 
-    const whatsappData = await whatsappResponse.json();
-
-    // UltraMsg may return HTTP 200 even when the message is not accepted/queued.
-    // We treat only clearly "sent" / "queue" as success.
-    const ultraMsgStatus = String((whatsappData as any)?.status ?? "").toLowerCase();
-    const isAccepted =
-      whatsappResponse.ok && (ultraMsgStatus === "sent" || ultraMsgStatus === "queue");
-
-    console.log("[send-otp] ultramsg response:", {
+    const whatsappData = await whatsappResponse.json().catch(() => ({}));
+    console.log("[send-otp] baileys-service response:", {
       ok: whatsappResponse.ok,
       status: whatsappResponse.status,
-      ultraMsgStatus,
       to: whatsappNumber,
     });
 
-    if (!isAccepted) {
+    if (!whatsappResponse.ok || whatsappData?.success === false) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -114,8 +104,7 @@ Deno.serve(async (req: Request) => {
       JSON.stringify({
         success: true,
         message: "OTP sent successfully",
-        provider: "ultramsg",
-        provider_status: ultraMsgStatus
+        provider: "baileys-service"
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
