@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import type { Location } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { Input } from '../components/Input';
 import { supabase } from '../lib/supabase';
@@ -8,9 +9,12 @@ import { showToast } from '../components/Toast';
 import { formatPhoneForDisplay } from '../utils/phoneNumber';
 import { MessageSquare, RefreshCcw, ArrowRight, ShieldCheck } from 'lucide-react';
 import { establishSupabaseAuthSession } from '../lib/session';
+import { getPostAuthRedirectPath } from '../utils/navigation';
 
 export const VerifyOTP = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const authReturn = (location.state as { from?: Location } | null)?.from;
   const { user, isLoggedIn, setUser } = useStore();
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
@@ -22,7 +26,7 @@ export const VerifyOTP = () => {
     // If already logged in (which implies verified for non-admin users),
     // send straight to the appropriate home.
     if (isLoggedIn && user) {
-      navigate(user.role === 'admin' ? '/admin' : '/', { replace: true });
+      navigate(getPostAuthRedirectPath(user, authReturn), { replace: true });
       return;
     }
 
@@ -32,8 +36,8 @@ export const VerifyOTP = () => {
       return;
     }
 
-    navigate('/login', { replace: true });
-  }, [isLoggedIn, navigate, user]);
+    navigate('/login', { replace: true, state: location.state });
+  }, [isLoggedIn, navigate, user, authReturn, location.state]);
 
   useEffect(() => {
     if (countdown > 0) {
@@ -97,7 +101,7 @@ export const VerifyOTP = () => {
           localStorage.removeItem('temp_pin');
 
           setTimeout(() => {
-            navigate(data.user.role === 'admin' ? '/admin' : '/');
+            navigate(getPostAuthRedirectPath(data.user, authReturn));
           }, 500);
         } else {
           const tempPin = localStorage.getItem('temp_pin');
@@ -113,14 +117,14 @@ export const VerifyOTP = () => {
               localStorage.removeItem('temp_pin');
 
               setTimeout(() => {
-                navigate(loginData.user.role === 'admin' ? '/admin' : '/');
+                navigate(getPostAuthRedirectPath(loginData.user, authReturn));
               }, 500);
             } else {
               localStorage.removeItem('temp_pin');
-              navigate('/login');
+              navigate('/login', { state: location.state });
             }
           } else {
-            navigate('/login');
+            navigate('/login', { state: location.state });
           }
         }
       } else {
@@ -211,7 +215,7 @@ export const VerifyOTP = () => {
               type="button"
               onClick={() => {
                 localStorage.removeItem('pending_phone');
-                navigate('/register');
+                navigate('/register', { state: location.state });
               }}
               className="group flex items-center justify-center gap-2 py-2 text-gray-500 hover:text-white transition-colors text-xs font-bold"
             >

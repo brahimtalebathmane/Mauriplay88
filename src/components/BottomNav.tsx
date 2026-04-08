@@ -5,7 +5,15 @@ import { useStore } from '../store/useStore';
 export const BottomNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useStore();
+  const { user, isLoggedIn } = useStore();
+
+  const goProtected = (path: string) => {
+    if (isLoggedIn && user) {
+      navigate(path);
+    } else {
+      navigate('/login', { state: { from: location } });
+    }
+  };
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -38,7 +46,7 @@ export const BottomNav = () => {
             {/* My Purchases */}
             <button
               onClick={() => {
-                navigate('/my-purchases');
+                goProtected('/my-purchases');
               }}
               className={`flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-xs font-medium transition-all ${
                 isActive('/my-purchases') ? 'text-white bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -49,8 +57,20 @@ export const BottomNav = () => {
             </button>
 
             {/* Wallet */}
-            {user?.wallet_active ? (
+            {!isLoggedIn || !user ? (
               <button
+                type="button"
+                onClick={() => goProtected('/wallet')}
+                className={`flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-xs font-medium transition-all ${
+                  isActive('/wallet') ? 'text-white bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                <Wallet className="w-5 h-5" />
+                <span>المحفظة</span>
+              </button>
+            ) : user.wallet_active ? (
+              <button
+                type="button"
                 onClick={() => {
                   navigate('/wallet');
                 }}
@@ -70,7 +90,8 @@ export const BottomNav = () => {
 
             {/* Menu - navigates to full-screen menu page */}
             <button
-              onClick={() => navigate('/menu')}
+              type="button"
+              onClick={() => goProtected('/menu')}
               className={`flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-xs font-medium transition-all ${
                 isActive('/menu') ? 'text-white bg-white/10' : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}

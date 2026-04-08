@@ -1,8 +1,19 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { User } from 'lucide-react';
+import { useStore } from '../store/useStore';
 
 export const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { isLoggedIn, user } = useStore();
+
+  const goProfile = () => {
+    if (isLoggedIn && user) {
+      navigate('/profile');
+    } else {
+      navigate('/login', { state: { from: location } });
+    }
+  };
 
   return (
     <header className="bg-card border-b border-white/10 sticky top-0 z-40">
@@ -25,7 +36,8 @@ export const Header = () => {
         </button>
 
         <button
-          onClick={() => navigate('/profile')}
+          type="button"
+          onClick={goProfile}
           className="text-white p-2 hover:bg-white/10 rounded-btn transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
           aria-label="الملف الشخصي"
         >

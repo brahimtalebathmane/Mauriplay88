@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useStore } from './store/useStore';
 import { ToastContainer } from './components/Toast';
 import { SupportButton } from './components/SupportButton';
@@ -25,9 +25,10 @@ import { AdminDashboard } from './pages/admin/Dashboard';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isLoggedIn, user } = useStore();
+  const location = useLocation();
 
   if (!isLoggedIn || !user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   return <>{children}</>;
@@ -63,8 +64,8 @@ function App() {
         <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
         <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
 
-        <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-        <Route path="/platform/:id" element={<ProtectedRoute><PlatformPage /></ProtectedRoute>} />
+        <Route path="/" element={<Home />} />
+        <Route path="/platform/:id" element={<PlatformPage />} />
         <Route path="/purchase/:id" element={<ProtectedRoute><Purchase /></ProtectedRoute>} />
         <Route path="/order-success/:id" element={<ProtectedRoute><OrderSuccess /></ProtectedRoute>} />
         <Route path="/wallet-purchase-success" element={<ProtectedRoute><WalletPurchaseSuccess /></ProtectedRoute>} />

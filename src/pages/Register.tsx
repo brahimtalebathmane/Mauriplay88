@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { PhoneInput } from '../components/PhoneInput';
 import { Input } from '../components/Input';
@@ -10,6 +10,7 @@ import { UserPlus, Lock, Smartphone, ArrowRight } from 'lucide-react';
 
 export const Register = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
@@ -59,7 +60,7 @@ export const Register = () => {
         }
 
         if (otpData?.success) {
-          navigate('/verify-otp');
+          navigate('/verify-otp', { state: location.state });
         } else {
           showToast(otpData?.message || 'فشل إرسال رمز التحقق', 'error');
         }
@@ -161,7 +162,7 @@ export const Register = () => {
 
           <button
             type="button"
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/login', { state: location.state })}
             className="w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-bold hover:bg-white/10 transition-all flex items-center justify-center gap-2 group"
           >
             تسجيل الدخول

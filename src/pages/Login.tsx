@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import type { Location } from 'react-router-dom';
 import { Button } from '../components/Button';
 import { PhoneInput } from '../components/PhoneInput';
 import { Input } from '../components/Input';
@@ -9,9 +10,12 @@ import { showToast } from '../components/Toast';
 import { sanitizePhoneNumber, validateMauritanianPhone } from '../utils/phoneNumber';
 import { logger } from '../utils/logger';
 import { establishSupabaseAuthSession } from '../lib/session';
+import { getPostAuthRedirectPath } from '../utils/navigation';
 
 export const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const authReturn = (location.state as { from?: Location } | null)?.from;
   const { setUser } = useStore();
   const [phone, setPhone] = useState('');
   const [pin, setPin] = useState('');
@@ -58,18 +62,14 @@ export const Login = () => {
         }
         showToast('تم تسجيل الدخول بنجاح', 'success');
 
-        if (data.user.role === 'admin') {
-          logger.info('Login', 'Redirecting to admin dashboard');
-          navigate('/admin');
-        } else {
-          logger.info('Login', 'Redirecting to home');
-          navigate('/');
-        }
+        const next = getPostAuthRedirectPath(data.user, authReturn);
+        logger.info('Login', 'Redirecting after login', { path: next });
+        navigate(next);
       } else if (data.account_locked) {
         logger.warn('Login', 'Account locked', { phone: fullPhone });
         showToast(data.message || 'تم إيقاف حسابك مؤقتاً', 'error');
         navigate('/account-recovery', {
-          state: { phone_number: fullPhone }
+          state: { phone_number: fullPhone, from: authReturn },
         });
       } else if (data.require_verification) {
         logger.info('Login', 'Phone verification required', { phone: fullPhone });
@@ -83,7 +83,7 @@ export const Login = () => {
             body: { phone_number: fullPhone },
           });
           logger.success('Login', 'OTP sent successfully');
-          navigate('/verify-otp');
+          navigate('/verify-otp', { state: location.state });
         } catch (otpError) {
           logger.error('Login', 'Failed to send OTP', otpError);
           showToast('فشل إرسال رمز التحقق. يرجى المحاولة مرة أخرى', 'error');
@@ -100,7 +100,7 @@ export const Login = () => {
             body: { phone_number: fullPhone },
           });
           logger.success('Login', 'OTP sent successfully');
-          navigate('/verify-otp');
+          navigate('/verify-otp', { state: location.state });
         } catch (otpError) {
           logger.error('Login', 'Failed to send OTP', otpError);
           showToast('فشل إرسال رمز التحقق. يرجى المحاولة مرة أخرى', 'error');
@@ -171,7 +171,7 @@ export const Login = () => {
             ليس لديك حساب؟{' '}
             <button
               type="button"
-              onClick={() => navigate('/register')}
+              onClick={() => navigate('/register', { state: location.state })}
               className="text-white hover:underline"
             >
               إنشاء حساب جديد
