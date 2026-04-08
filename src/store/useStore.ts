@@ -5,6 +5,7 @@ import { normalizeUser } from '../utils/auth';
 import { supabase } from '../lib/supabase';
 
 interface StoreState {
+  /** App session: guest when false or `user` is null; authenticated when true with a `user`. */
   isLoggedIn: boolean;
   user: User | null;
   setUser: (user: User | null) => void;
