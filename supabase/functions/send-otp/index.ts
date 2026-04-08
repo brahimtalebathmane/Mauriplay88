@@ -7,8 +7,26 @@ const corsHeaders = {
   "Access-Control-Max-Age": "86400"
 };
 
-interface RequestBody {
-  phone_number: string;
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" }
+  });
+}
+
+function parseCodePayload(codeData: unknown): { success: boolean; message?: string; code?: string } | null {
+  if (codeData == null) return null;
+  if (typeof codeData === "string") {
+    try {
+      return JSON.parse(codeData) as { success: boolean; message?: string; code?: string };
+    } catch {
+      return null;
+    }
+  }
+  if (typeof codeData === "object" && "success" in (codeData as object)) {
+    return codeData as { success: boolean; message?: string; code?: string };
+  }
+  return null;
 }
 
 Deno.serve(async (req: Request) => {
@@ -21,10 +39,8 @@ Deno.serve(async (req: Request) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-    // Your own Baileys WhatsApp service (Node) must be deployed somewhere that stays running.
-    // Example: https://your-whatsapp-otp-service.onrender.com
     const whatsappServiceUrl = Deno.env.get("WHATSAPP_OTP_SERVICE_URL");
-    const whatsappServiceToken = Deno.env.get("WHATSAPP_OTP_SERVICE_TOKEN"); // optional
+    const whatsappServiceToken = Deno.env.get("WHATSAPP_OTP_SERVICE_TOKEN");
 
     if (!supabaseUrl || !supabaseServiceKey || !whatsappServiceUrl) {
       throw new Error("Missing environment variables");
@@ -32,16 +48,11 @@ Deno.serve(async (req: Request) => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { phone_number }: RequestBody = await req.json();
+    const raw = await req.json().catch(() => ({})) as Record<string, unknown>;
+    const phone_number = String(raw.phone_number ?? raw.phoneNumber ?? "").trim();
 
     if (!phone_number) {
-      return new Response(
-        JSON.stringify({ success: false, message: "Phone number is required" }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
-      );
+      return jsonResponse({ success: false, message: "Phone number is required" });
     }
 
     const { data: codeData, error: codeError } = await supabase.rpc(
@@ -53,19 +64,21 @@ Deno.serve(async (req: Request) => {
       throw codeError;
     }
 
-    if (!codeData.success) {
-      return new Response(
-        JSON.stringify({ success: false, message: codeData.message }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
+    const payload = parseCodePayload(codeData);
+    if (!payload || typeof payload.success !== "boolean") {
+      console.error("[send-otp] unexpected RPC payload:", codeData);
+      return jsonResponse(
+        { success: false, message: "Invalid verification response" },
+        500
       );
+    }
+
+    if (!payload.success) {
+      return jsonResponse({ success: false, message: payload.message ?? "Could not create verification code" });
     }
 
     const whatsappNumber = phone_number.replace("+", "");
 
-    // Send through your Baileys service (it will send: "Your verification code is: 1234")
     const baseUrl = whatsappServiceUrl.replace(/\/$/, "");
     const sendUrl = `${baseUrl}/send-otp`;
     const whatsappResponse = await fetch(sendUrl, {
@@ -76,7 +89,7 @@ Deno.serve(async (req: Request) => {
       },
       body: JSON.stringify({
         phone: whatsappNumber,
-        otp: String(codeData.code),
+        otp: String(payload.code),
       })
     });
 
@@ -88,42 +101,26 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!whatsappResponse.ok || whatsappData?.success === false) {
-      return new Response(
-        JSON.stringify({
+      return jsonResponse(
+        {
           success: false,
           message: "Failed to send WhatsApp message",
           details: whatsappData
-        }),
-        {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" }
-        }
+        },
+        500
       );
     }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: "OTP sent successfully",
-        provider: "baileys-service"
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      }
-    );
+    return jsonResponse({
+      success: true,
+      message: "OTP sent successfully",
+      provider: "baileys-service"
+    });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
 
-    return new Response(
-      JSON.stringify({
-        success: false,
-        message: error.message || "Internal server error"
-      }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" }
-      }
-    );
+    const message = error instanceof Error ? error.message : "Internal server error";
+    return jsonResponse({ success: false, message }, 500);
 
   }
 
