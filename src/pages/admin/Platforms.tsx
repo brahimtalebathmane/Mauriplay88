@@ -19,6 +19,7 @@ export const Platforms = () => {
     logo_url: '',
     website_url: '',
     tutorial_video_url: '',
+    description: '',
   });
 
   useEffect(() => {
@@ -73,6 +74,7 @@ export const Platforms = () => {
           p_logo_url: formData.logo_url.trim(),
           p_website_url: formData.website_url.trim() || null,
           p_tutorial_video_url: formData.tutorial_video_url.trim() || null,
+          p_description: formData.description.trim() || null,
         });
         if (error) throw error;
         const result = data as { success?: boolean; message?: string };
@@ -88,6 +90,7 @@ export const Platforms = () => {
           p_logo_url: formData.logo_url.trim(),
           p_website_url: formData.website_url.trim() || null,
           p_tutorial_video_url: formData.tutorial_video_url.trim() || null,
+          p_description: formData.description.trim() || null,
         });
         if (error) throw error;
         const result = data as { success?: boolean; message?: string };
@@ -122,6 +125,7 @@ export const Platforms = () => {
       logo_url: platform.logo_url || '',
       website_url: platform.website_url || '',
       tutorial_video_url: platform.tutorial_video_url || '',
+      description: platform.description?.trim() ? platform.description : '',
     });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -168,7 +172,7 @@ export const Platforms = () => {
   const handleCancelEdit = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ name: '', logo_url: '', website_url: '', tutorial_video_url: '' });
+    setFormData({ name: '', logo_url: '', website_url: '', tutorial_video_url: '', description: '' });
   };
 
   return (
@@ -222,6 +226,20 @@ export const Platforms = () => {
               placeholder="https://youtube.com/..."
               disabled={submitting}
             />
+            <div className="w-full">
+              <label className="block text-gray-300 text-caption font-medium mb-2 text-right">
+                وصف المنصة (اختياري)
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="نبذة قصيرة تظهر للمستخدمين تحت اسم المنصة"
+                disabled={submitting}
+                rows={4}
+                maxLength={2000}
+                className="w-full min-h-[100px] bg-card text-white border border-white/10 rounded-input px-4 py-3 focus:outline-none focus:ring-2 focus:ring-cyan-500/40 focus:border-cyan-500/50 transition-colors text-right resize-y"
+              />
+            </div>
             <div className="flex gap-3 pt-2">
               <Button type="submit" className="flex-1" disabled={submitting}>
                 <div className="flex items-center justify-center gap-2">

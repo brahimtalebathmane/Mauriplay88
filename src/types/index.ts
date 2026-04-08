@@ -21,6 +21,8 @@ export interface Platform {
   id: string;
   name: string;
   logo_url: string;
+  /** Optional; shown on the public platform page */
+  description?: string | null;
   website_url?: string;
   tutorial_video_url?: string;
   is_deleted: boolean;

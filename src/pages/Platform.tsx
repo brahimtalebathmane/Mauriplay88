@@ -132,6 +132,12 @@ export const PlatformPage = () => {
                   {platform.name}
                 </h1>
 
+                {platform.description?.trim() ? (
+                  <p className="text-base sm:text-lg text-gray-400 font-medium text-start max-w-2xl leading-relaxed whitespace-pre-wrap">
+                    {platform.description.trim()}
+                  </p>
+                ) : null}
+
                 <div className="flex items-center gap-3 sm:gap-4 opacity-70 justify-start flex-wrap">
                   <div className="h-px w-10 sm:w-12 bg-gradient-to-r from-transparent to-cyan-500 shrink-0" />
                   <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-[0.5em] text-start">Premium Selection</span>

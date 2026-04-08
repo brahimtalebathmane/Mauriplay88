@@ -56,7 +56,7 @@ export const PlatformsAPI = {
     return data;
   },
 
-  async create(platform: { name: string; logo_url: string; website_url?: string; tutorial_video_url?: string }) {
+  async create(platform: { name: string; logo_url: string; website_url?: string; tutorial_video_url?: string; description?: string | null }) {
     logger.debug('API', 'Creating platform', platform);
 
     const { data, error } = await supabase
@@ -66,6 +66,7 @@ export const PlatformsAPI = {
         logo_url: platform.logo_url.trim(),
         website_url: platform.website_url?.trim() || null,
         tutorial_video_url: platform.tutorial_video_url?.trim() || null,
+        description: platform.description?.trim() || null,
       })
       .select()
       .single();
@@ -76,7 +77,7 @@ export const PlatformsAPI = {
     return data;
   },
 
-  async update(id: string, platform: Partial<{ name: string; logo_url: string; website_url?: string; tutorial_video_url?: string }>) {
+  async update(id: string, platform: Partial<{ name: string; logo_url: string; website_url?: string; tutorial_video_url?: string; description?: string | null }>) {
     logger.debug('API', 'Updating platform', { id, platform });
 
     const updateData: any = {};
@@ -84,6 +85,7 @@ export const PlatformsAPI = {
     if (platform.logo_url !== undefined) updateData.logo_url = platform.logo_url.trim();
     if (platform.website_url !== undefined) updateData.website_url = platform.website_url?.trim() || null;
     if (platform.tutorial_video_url !== undefined) updateData.tutorial_video_url = platform.tutorial_video_url?.trim() || null;
+    if (platform.description !== undefined) updateData.description = platform.description?.trim() || null;
 
     const { data, error } = await supabase
       .from('platforms')
