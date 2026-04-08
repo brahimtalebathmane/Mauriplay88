@@ -83,7 +83,20 @@ Deno.serve(async (req: Request) => {
 
     const whatsappData = await whatsappResponse.json();
 
-    if (!whatsappResponse.ok) {
+    // UltraMsg may return HTTP 200 even when the message is not accepted/queued.
+    // We treat only clearly "sent" / "queue" as success.
+    const ultraMsgStatus = String((whatsappData as any)?.status ?? "").toLowerCase();
+    const isAccepted =
+      whatsappResponse.ok && (ultraMsgStatus === "sent" || ultraMsgStatus === "queue");
+
+    console.log("[send-otp] ultramsg response:", {
+      ok: whatsappResponse.ok,
+      status: whatsappResponse.status,
+      ultraMsgStatus,
+      to: whatsappNumber,
+    });
+
+    if (!isAccepted) {
       return new Response(
         JSON.stringify({
           success: false,
@@ -100,7 +113,9 @@ Deno.serve(async (req: Request) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: "OTP sent successfully"
+        message: "OTP sent successfully",
+        provider: "ultramsg",
+        provider_status: ultraMsgStatus
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" }
