@@ -13,6 +13,7 @@ import makeWASocket, {
 import QRCode from 'qrcode';
 import pino from 'pino';
 import path from 'path';
+import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -89,6 +90,25 @@ function pushLog(message) {
   const ts = new Date().toISOString().replace('T', ' ').replace('Z', '');
   logs.push(`${ts} - ${message}`);
   while (logs.length > 10) logs.shift();
+}
+
+/**
+ * Clear multi-file auth state to force a fresh QR.
+ * This is required when Baileys reports loggedOut (statusCode=401).
+ */
+async function clearAuthState() {
+  try {
+    await fs.mkdir(AUTH_DIR, { recursive: true });
+    const entries = await fs.readdir(AUTH_DIR).catch(() => []);
+    await Promise.all(
+      entries
+        .filter((name) => name !== '.gitkeep')
+        .map((name) => fs.rm(path.join(AUTH_DIR, name), { recursive: true, force: true }))
+    );
+    pushLog('Auth state cleared');
+  } catch (e) {
+    console.error('[WhatsApp] Failed to clear auth state:', e?.message || e);
+  }
 }
 
 export function getLogs() {
@@ -183,7 +203,10 @@ async function connectWhatsApp() {
           });
         }, 3000);
       } else {
-        console.log('[WhatsApp] Logged out. Delete auth folder and scan QR again.');
+        // Logged out (401). We must clear auth to show a new QR next time.
+        console.log('[WhatsApp] Logged out. Clearing auth state to force a new QR.');
+        void clearAuthState();
+        pushLog('Logged out (401)');
       }
     }
   });
@@ -229,5 +252,7 @@ export async function reconnectWhatsApp() {
     connectionReady = false;
   }
 
+  // Force a fresh QR on reconnect to support switching WhatsApp accounts.
+  await clearAuthState();
   await connectWhatsApp();
 }
