@@ -93,9 +93,17 @@ export async function triggerNotification(payload: NotificationPayload): Promise
         data,
       });
     }
+    const d =
+      lastData && typeof lastData === 'object'
+        ? (lastData as Record<string, unknown>)
+        : null;
     logger.error('Notifications', `send-notification exhausted retries (${payload.type})`, {
       lastError,
-      lastData,
+      message: d?.message,
+      oneSignalStatus: d?.status,
+      requestId: d?.request_id,
+      details: d?.details,
+      full: lastData,
     });
   } catch (e) {
     logger.error('Notifications', `send-notification threw (${payload.type})`, e);

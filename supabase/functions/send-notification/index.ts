@@ -59,6 +59,47 @@ interface RequestBody {
 
 const ONESIGNAL_API = "https://api.onesignal.com/notifications";
 
+function oneSignalHasMeaningfulErrors(data: unknown): boolean {
+  if (!data || typeof data !== "object") return false;
+  const e = (data as Record<string, unknown>).errors;
+  if (e == null) return false;
+  if (Array.isArray(e)) {
+    return e.some((item) => {
+      if (item == null) return false;
+      if (typeof item === "string") return item.length > 0;
+      if (typeof item === "object") return Object.keys(item as object).length > 0;
+      return true;
+    });
+  }
+  if (typeof e === "object") return Object.keys(e as object).length > 0;
+  return true;
+}
+
+function oneSignalErrorMessage(data: unknown): string | null {
+  if (!data || typeof data !== "object") return null;
+  const o = data as Record<string, unknown>;
+  const errors = o.errors;
+  if (typeof errors === "string") return errors;
+  if (Array.isArray(errors) && errors.length > 0) {
+    const first = errors[0];
+    if (typeof first === "string") return first;
+    if (first && typeof first === "object") {
+      const msg = (first as Record<string, unknown>).message ?? (first as Record<string, unknown>).text;
+      if (typeof msg === "string") return msg;
+    }
+  }
+  if (errors && typeof errors === "object") {
+    const entries = Object.entries(errors as Record<string, unknown>);
+    if (entries.length > 0) {
+      const [, v] = entries[0];
+      if (typeof v === "string") return v;
+      if (Array.isArray(v) && typeof v[0] === "string") return v[0];
+    }
+  }
+  if (typeof o.message === "string") return o.message;
+  return null;
+}
+
 function buildAdminPayload(type: NotificationType, baseUrl: string) {
   const base = (baseUrl || "").replace(/\/$/, "");
   let heading_ar = "MauriPlay";
@@ -224,7 +265,7 @@ Deno.serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: false,
-          message: "OneSignal API error",
+          message: oneSignalErrorMessage(data) ?? "OneSignal API error",
           status: res.status,
           request_id: requestId,
           details: data,
@@ -236,7 +277,44 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const id = typeof (data as { id?: unknown })?.id === "string" ? (data as { id: string }).id : null;
+    // HTTP 200: OneSignal may omit id when no message was created (no push subscriptions for target).
+    // See: https://documentation.onesignal.com/reference/create-notification — "If no id is returned..."
+    const rawId = (data as { id?: unknown })?.id;
+    const id = typeof rawId === "string" && rawId.length > 0 ? rawId : null;
+    const meaningfulErrors = oneSignalHasMeaningfulErrors(data);
+
+    if (!id && meaningfulErrors) {
+      console.error("[send-notification] OneSignal returned errors in body", { requestId, details: data });
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: oneSignalErrorMessage(data) ?? "OneSignal rejected notification",
+          status: res.status,
+          request_id: requestId,
+          details: data,
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    if (!id) {
+      return new Response(
+        JSON.stringify({
+          success: true,
+          skipped: true,
+          reason: "no_push_recipients",
+          status: res.status,
+          request_id: requestId,
+        }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
     return new Response(JSON.stringify({ success: true, id, status: res.status, request_id: requestId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
