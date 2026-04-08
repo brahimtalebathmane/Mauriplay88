@@ -81,10 +81,15 @@ export async function triggerNotification(payload: NotificationPayload): Promise
         logger.debug('Notifications', 'send-notification ok', { type: payload.type, attempt: i + 1 });
         return;
       }
+      const errCtx =
+        error && typeof error === 'object' && 'context' in error
+          ? (error as { context?: { status?: number } }).context
+          : undefined;
       logger.warn('Notifications', 'send-notification attempt failed', {
         type: payload.type,
         attempt: i + 1,
         error,
+        httpStatus: errCtx?.status,
         data,
       });
     }

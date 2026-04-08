@@ -11,14 +11,22 @@ const allowedOrigins = new Set([
   "https://www.mauriplay.store",
 ]);
 
+/** Match send-notification: allow local dev and preview deploys so functions.invoke passes CORS. */
+function resolveCorsOrigin(requestOrigin: string): string {
+  if (allowedOrigins.has(requestOrigin)) return requestOrigin;
+  if (
+    requestOrigin.includes("localhost") ||
+    requestOrigin.includes("127.0.0.1") ||
+    /^https:\/\/[a-z0-9-]+\.vercel\.app$/i.test(requestOrigin)
+  ) {
+    return requestOrigin;
+  }
+  return "https://mauriplay.store";
+}
+
 function corsHeaders(req: Request): Record<string, string> {
-  const origin = req.headers.get("Origin") ?? "";
-  const allow =
-    origin.includes("localhost") || origin.includes("127.0.0.1")
-      ? origin
-      : allowedOrigins.has(origin)
-      ? origin
-      : "https://mauriplay.store";
+  const requestOrigin = req.headers.get("Origin") ?? "";
+  const allow = resolveCorsOrigin(requestOrigin);
   return {
     "Access-Control-Allow-Origin": allow,
     Vary: "Origin",

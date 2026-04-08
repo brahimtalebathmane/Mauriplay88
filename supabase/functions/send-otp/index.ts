@@ -66,7 +66,8 @@ Deno.serve(async (req: Request) => {
     const whatsappNumber = phone_number.replace("+", "");
 
     // Send through your Baileys service (it will send: "Your verification code is: 1234")
-    const sendUrl = `${whatsappServiceUrl.replace(/\\/$/, "")}/send-otp`;
+    const baseUrl = whatsappServiceUrl.replace(/\/$/, "");
+    const sendUrl = `${baseUrl}/send-otp`;
     const whatsappResponse = await fetch(sendUrl, {
       method: "POST",
       headers: {

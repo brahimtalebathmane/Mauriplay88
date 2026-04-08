@@ -368,6 +368,18 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# Client-invoked functions: disable API-gateway JWT verification so requests succeed with
+# custom HS256 tokens from issue-session and with projects using ES256 signing keys (gateway
+# mismatch). Each function enforces its own rules (RPC login for issue-session; body for send-*).
+[functions.send-notification]
+verify_jwt = false
+
+[functions.issue-session]
+verify_jwt = false
+
+[functions.send-otp]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
