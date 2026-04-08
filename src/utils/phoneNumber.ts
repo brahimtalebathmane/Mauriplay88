@@ -7,9 +7,7 @@ export const sanitizePhoneNumber = (input: string): string => {
 
   digitsOnly = digitsOnly.slice(0, 8);
 
-  const result = '222' + digitsOnly;
-  console.log('sanitizePhoneNumber:', { input, digitsOnly, result });
-  return result;
+  return '222' + digitsOnly;
 };
 
 export const formatPhoneForDisplay = (phone: string): string => {
@@ -26,7 +24,5 @@ export const formatPhoneInput = (value: string): string => {
 
 export const validateMauritanianPhone = (phone: string): boolean => {
   const phoneRegex = /^222[234][0-9]{7}$/;
-  const isValid = phoneRegex.test(phone);
-  console.log('validateMauritanianPhone:', { phone, isValid });
-  return isValid;
+  return phoneRegex.test(phone);
 };

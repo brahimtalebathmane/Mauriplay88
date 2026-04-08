@@ -6,6 +6,7 @@ import { Input } from '../components/Input';
 import { supabase } from '../lib/supabase';
 import { showToast } from '../components/Toast';
 import { sanitizePhoneNumber, validateMauritanianPhone } from '../utils/phoneNumber';
+import { getFunctionsInvokeMessage } from '../utils/edgeFunction';
 import { UserPlus, Lock, Smartphone, ArrowRight } from 'lucide-react';
 
 export const Register = () => {
@@ -54,16 +55,12 @@ export const Register = () => {
           body: { phone_number: fullPhone },
         });
 
-        if (otpError) {
-          showToast('فشل إرسال رمز التحقق، يرجى المحاولة لاحقاً', 'error');
+        if (otpError || !otpData?.success) {
+          showToast(await getFunctionsInvokeMessage(otpError, otpData), 'error');
           return;
         }
 
-        if (otpData?.success) {
-          navigate('/verify-otp', { state: location.state });
-        } else {
-          showToast(otpData?.message || 'فشل إرسال رمز التحقق', 'error');
-        }
+        navigate('/verify-otp', { state: location.state });
       } else {
         showToast(data.message, 'error');
       }

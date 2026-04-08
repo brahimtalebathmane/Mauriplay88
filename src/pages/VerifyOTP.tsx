@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 import { useStore } from '../store/useStore';
 import { showToast } from '../components/Toast';
 import { formatPhoneForDisplay } from '../utils/phoneNumber';
+import { getFunctionsInvokeMessage } from '../utils/edgeFunction';
 import { MessageSquare, RefreshCcw, ArrowRight, ShieldCheck } from 'lucide-react';
 import { establishSupabaseAuthSession } from '../lib/session';
 import { getPostAuthRedirectPath } from '../utils/navigation';
@@ -55,14 +56,13 @@ export const VerifyOTP = () => {
         body: { phone_number: phone },
       });
 
-      if (error) throw error;
-
-      if (data?.success) {
-        showToast('تم إرسال رمز التحقق إلى WhatsApp', 'success');
-        setCountdown(60);
-      } else {
-        showToast(data?.message || 'فشل إرسال رمز التحقق', 'error');
+      if (error || !data?.success) {
+        showToast(await getFunctionsInvokeMessage(error, data), 'error');
+        return;
       }
+
+      showToast('تم إرسال رمز التحقق إلى WhatsApp', 'success');
+      setCountdown(60);
     } catch (error: unknown) {
       showToast(error instanceof Error ? error.message : 'حدث خطأ أثناء إرسال رمز التحقق', 'error');
     } finally {

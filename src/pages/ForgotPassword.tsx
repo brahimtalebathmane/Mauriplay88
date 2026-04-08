@@ -6,6 +6,7 @@ import { Input } from '../components/Input';
 import { supabase } from '../lib/supabase';
 import { showToast } from '../components/Toast';
 import { sanitizePhoneNumber, validateMauritanianPhone, formatPhoneForDisplay } from '../utils/phoneNumber';
+import { getFunctionsInvokeMessage } from '../utils/edgeFunction';
 import { MessageSquare, RefreshCcw, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
 
 type Step = 'phone' | 'otp' | 'pin';
@@ -51,9 +52,8 @@ export const ForgotPassword = () => {
       const { data, error } = await supabase.functions.invoke('send-otp', {
         body: { phone_number: fullPhone },
       });
-      if (error) throw error;
-      if (!data?.success) {
-        showToast(data?.message || 'فشل إرسال رمز التحقق', 'error');
+      if (error || !data?.success) {
+        showToast(await getFunctionsInvokeMessage(error, data), 'error');
         return;
       }
       showToast('تم إرسال رمز التحقق إلى WhatsApp', 'success');
@@ -73,13 +73,12 @@ export const ForgotPassword = () => {
       const { data, error } = await supabase.functions.invoke('send-otp', {
         body: { phone_number: fullPhone },
       });
-      if (error) throw error;
-      if (data?.success) {
-        showToast('تم إعادة إرسال الرمز إلى WhatsApp', 'success');
-        setCountdown(60);
-      } else {
-        showToast(data?.message || 'فشل إعادة الإرسال', 'error');
+      if (error || !data?.success) {
+        showToast(await getFunctionsInvokeMessage(error, data), 'error');
+        return;
       }
+      showToast('تم إعادة إرسال الرمز إلى WhatsApp', 'success');
+      setCountdown(60);
     } catch (e: unknown) {
       showToast(e instanceof Error ? e.message : 'حدث خطأ', 'error');
     } finally {
