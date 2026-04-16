@@ -1,0 +1,11 @@
+# Force Railway to run the WhatsApp OTP backend from monorepo root.
+# This prevents auto-detection as a Vite static site (Caddy runtime).
+
+[build]
+buildCommand = "npm --prefix whatsapp-otp-service ci"
+
+[deploy]
+startCommand = "npm --prefix whatsapp-otp-service start"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
