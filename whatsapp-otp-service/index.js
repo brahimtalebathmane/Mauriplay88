@@ -23,7 +23,18 @@ import {
 } from './whatsapp.js';
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+
+/** Railway and other PaaS set PORT; must be a positive integer. */
+function resolvePort() {
+  const n = Number.parseInt(String(process.env.PORT ?? ''), 10);
+  return Number.isFinite(n) && n > 0 ? n : 3000;
+}
+
+const PORT = resolvePort();
+/** Bind address: Railway expects the process to listen on all interfaces. */
+const HOST = process.env.HOST || '0.0.0.0';
+
+app.set('trust proxy', 1);
 
 process.on('unhandledRejection', (reason) => {
   console.error('[process] unhandledRejection:', reason);
@@ -298,6 +309,11 @@ function dashboardHtml() {
 </html>`;
 }
 
+/** Liveness probe for Railway and other orchestrators (no auth required). */
+app.get('/health', (_req, res) => {
+  res.status(200).json({ ok: true });
+});
+
 // Dashboard (required): GET /
 app.get('/', (_req, res) => {
   res.type('html').send(dashboardHtml());
@@ -401,10 +417,28 @@ app.post('/verify-otp', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  const base = `http://localhost:${PORT}`;
-  console.log(`OTP API listening on ${base}`);
-  console.log(`Dashboard: ${base}`);
-  process.env.PORT = String(PORT); // allow whatsapp.js to print accurate hints if needed
+function publicListenUrl() {
+  const explicit =
+    process.env.PUBLIC_BASE_URL ||
+    process.env.RAILWAY_PUBLIC_DOMAIN ||
+    process.env.RAILWAY_STATIC_URL;
+  if (explicit) {
+    const u = String(explicit).trim();
+    if (u.startsWith('http://') || u.startsWith('https://')) return u.replace(/\/$/, '');
+    return `https://${u.replace(/\/$/, '')}`;
+  }
+  return null;
+}
+
+app.listen(PORT, HOST, () => {
+  const listenUrl = `http://${HOST}:${PORT}`;
+  console.log(`OTP API listening on ${listenUrl}`);
+  const pub = publicListenUrl();
+  if (pub) {
+    console.log(`Public URL (env): ${pub}`);
+    console.log(`Dashboard: ${pub}/`);
+  } else {
+    console.log(`Dashboard: http://127.0.0.1:${PORT}/`);
+  }
   startWhatsApp();
 });

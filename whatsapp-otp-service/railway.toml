@@ -1,0 +1,11 @@
+# Railway config-as-code: set service Root Directory to `whatsapp-otp-service` in the Railway UI
+# when deploying from the monorepo root, or deploy this folder as the repo root.
+# https://docs.railway.com/reference/config-as-code
+
+[build]
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"

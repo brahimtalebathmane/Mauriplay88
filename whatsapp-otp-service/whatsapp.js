@@ -17,7 +17,10 @@ import fs from 'fs/promises';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const AUTH_DIR = path.join(__dirname, 'auth');
+/** Override with WHATSAPP_AUTH_DIR when using a Railway volume or custom mount. */
+const AUTH_DIR = process.env.WHATSAPP_AUTH_DIR
+  ? path.resolve(process.env.WHATSAPP_AUTH_DIR)
+  : path.join(__dirname, 'auth');
 
 /** Optional backup file (updated each time the QR refreshes) */
 export const PAIRING_QR_FILE = path.join(__dirname, 'pairing-qr.png');
