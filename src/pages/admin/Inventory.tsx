@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/Button';
 import { showToast } from '../../components/Toast';
 import { useStore } from '../../store/useStore';
 import type { Product } from '../../types';
-import { Plus, Upload, CreditCard as Edit2, Trash2, X, Check } from 'lucide-react';
+import { Plus, Upload, CreditCard as Edit2, Trash2, X, Check, ChevronDown } from 'lucide-react';
 
 interface InventoryItem {
   id: string;
@@ -16,17 +16,52 @@ interface InventoryItem {
   created_at: string;
 }
 
+interface ProductInventoryGroup {
+  product_id: string;
+  product_name: string;
+  platform_name: string;
+  items: InventoryItem[];
+}
+
 export const Inventory = () => {
   const { user } = useStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState({ code: '', status: '' });
   const [formData, setFormData] = useState({
     product_id: '',
     codes: '',
   });
+
+  const groupedByProduct = useMemo((): ProductInventoryGroup[] => {
+    const map = new Map<string, ProductInventoryGroup>();
+    for (const item of inventory) {
+      const existing = map.get(item.product_id);
+      if (existing) {
+        existing.items.push(item);
+      } else {
+        map.set(item.product_id, {
+          product_id: item.product_id,
+          product_name: item.product_name,
+          platform_name: item.platform_name,
+          items: [item],
+        });
+      }
+    }
+    for (const g of map.values()) {
+      g.items.sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    }
+    return Array.from(map.values()).sort((a, b) => {
+      const p = a.platform_name.localeCompare(b.platform_name, 'ar');
+      if (p !== 0) return p;
+      return a.product_name.localeCompare(b.product_name, 'ar');
+    });
+  }, [inventory]);
 
   useEffect(() => {
     loadProducts();
@@ -100,8 +135,10 @@ export const Inventory = () => {
 
       if (data?.success) {
         showToast(data.message, 'success');
+        const addedForProduct = formData.product_id;
         setShowForm(false);
         setFormData({ product_id: '', codes: '' });
+        setExpandedProductId(addedForProduct);
         loadInventory();
       } else {
         showToast(data?.message || 'فشلت الإضافة', 'error');
@@ -209,6 +246,16 @@ export const Inventory = () => {
     }
   };
 
+  const toggleProductExpanded = (productId: string) => {
+    setExpandedProductId((prev) => (prev === productId ? null : productId));
+    setEditingId(null);
+  };
+
+  const openAddCodesFormForProduct = (productId: string) => {
+    setFormData({ product_id: productId, codes: '' });
+    setShowForm(true);
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -290,94 +337,191 @@ export const Inventory = () => {
             <table className="w-full">
               <thead className="bg-gray-800">
                 <tr>
+                  <th className="w-10 px-3 py-3" aria-hidden />
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase">المنصة</th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase">المنتج</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase">الكود</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase">الحالة</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase">التاريخ</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase">الإجراءات</th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase">عدد الأكواد</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-800">
-                {inventory.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-800/50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                      {item.platform_name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-white">
-                      {item.product_name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-white">
-                      {editingId === item.id ? (
-                        <input
-                          type="text"
-                          value={editData.code}
-                          onChange={(e) => setEditData({ ...editData, code: e.target.value })}
-                          className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white focus:outline-none focus:border-white"
-                          dir="ltr"
-                        />
-                      ) : (
-                        item.code
+                {groupedByProduct.map((group) => {
+                  const isOpen = expandedProductId === group.product_id;
+                  return (
+                    <Fragment key={group.product_id}>
+                      <tr
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => toggleProductExpanded(group.product_id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            toggleProductExpanded(group.product_id);
+                          }
+                        }}
+                        className="hover:bg-gray-800/50 cursor-pointer transition-colors"
+                      >
+                        <td className="px-3 py-4 text-gray-400">
+                          <ChevronDown
+                            className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                            aria-hidden
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-white">{group.platform_name}</td>
+                        <td className="px-6 py-4 text-sm text-white">{group.product_name}</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">
+                          {group.items.length}
+                        </td>
+                      </tr>
+                      {isOpen && (
+                        <tr className="bg-gray-950/80">
+                          <td colSpan={4} className="p-0 border-t border-gray-800">
+                            <div className="p-4 sm:p-6 space-y-4">
+                              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <p className="text-gray-400 text-sm text-right">
+                                  أكواد هذا المنتج — يمكنك تعديلها أو حذفها من الجدول أدناه
+                                </p>
+                                <Button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openAddCodesFormForProduct(group.product_id);
+                                  }}
+                                  className="shrink-0"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <Plus className="w-4 h-4" />
+                                    <span>إضافة أكواد لهذا المنتج</span>
+                                  </div>
+                                </Button>
+                              </div>
+                              <div className="overflow-x-auto rounded-lg border border-gray-800">
+                                <table className="w-full min-w-[640px]">
+                                  <thead className="bg-gray-800/80">
+                                    <tr>
+                                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-300 uppercase">
+                                        الكود
+                                      </th>
+                                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-300 uppercase">
+                                        الحالة
+                                      </th>
+                                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-300 uppercase">
+                                        التاريخ
+                                      </th>
+                                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-300 uppercase">
+                                        الإجراءات
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody className="divide-y divide-gray-800">
+                                    {group.items.map((item) => (
+                                      <tr key={item.id} className="hover:bg-gray-800/40">
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm font-mono text-white">
+                                          {editingId === item.id ? (
+                                            <input
+                                              type="text"
+                                              value={editData.code}
+                                              onChange={(e) =>
+                                                setEditData({ ...editData, code: e.target.value })
+                                              }
+                                              onClick={(e) => e.stopPropagation()}
+                                              className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white focus:outline-none focus:border-white w-full max-w-xs"
+                                              dir="ltr"
+                                            />
+                                          ) : (
+                                            item.code
+                                          )}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm">
+                                          {editingId === item.id ? (
+                                            <select
+                                              value={editData.status}
+                                              onChange={(e) =>
+                                                setEditData({ ...editData, status: e.target.value })
+                                              }
+                                              onClick={(e) => e.stopPropagation()}
+                                              className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white focus:outline-none focus:border-white"
+                                            >
+                                              <option value="available">متاح</option>
+                                              <option value="reserved">محجوز</option>
+                                              <option value="sold">مباع</option>
+                                              <option value="compromised">معطوب</option>
+                                            </select>
+                                          ) : (
+                                            <span
+                                              className={`px-2 py-1 rounded text-xs ${getStatusColor(item.status)}`}
+                                            >
+                                              {getStatusText(item.status)}
+                                            </span>
+                                          )}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-400">
+                                          {new Date(item.created_at).toLocaleDateString('ar-MR')}
+                                        </td>
+                                        <td className="px-4 py-3 whitespace-nowrap text-sm">
+                                          {editingId === item.id ? (
+                                            <div className="flex gap-2">
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleSaveEdit(item.id);
+                                                }}
+                                                className="text-green-400 hover:text-green-300"
+                                              >
+                                                <Check className="w-4 h-4" />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  setEditingId(null);
+                                                }}
+                                                className="text-gray-400 hover:text-gray-300"
+                                              >
+                                                <X className="w-4 h-4" />
+                                              </button>
+                                            </div>
+                                          ) : (
+                                            <div className="flex gap-2">
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleEdit(item);
+                                                }}
+                                                className="text-blue-400 hover:text-blue-300 disabled:opacity-40"
+                                                disabled={item.status === 'sold'}
+                                              >
+                                                <Edit2 className="w-4 h-4" />
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  handleDelete(item.id);
+                                                }}
+                                                className="text-red-400 hover:text-red-300 disabled:opacity-40"
+                                                disabled={
+                                                  item.status === 'sold' || item.status === 'reserved'
+                                                }
+                                              >
+                                                <Trash2 className="w-4 h-4" />
+                                              </button>
+                                            </div>
+                                          )}
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
                       )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {editingId === item.id ? (
-                        <select
-                          value={editData.status}
-                          onChange={(e) => setEditData({ ...editData, status: e.target.value })}
-                          className="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-white focus:outline-none focus:border-white"
-                        >
-                          <option value="available">متاح</option>
-                          <option value="reserved">محجوز</option>
-                          <option value="sold">مباع</option>
-                          <option value="compromised">معطوب</option>
-                        </select>
-                      ) : (
-                        <span className={`px-2 py-1 rounded text-xs ${getStatusColor(item.status)}`}>
-                          {getStatusText(item.status)}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
-                      {new Date(item.created_at).toLocaleDateString('ar-MR')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {editingId === item.id ? (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleSaveEdit(item.id)}
-                            className="text-green-400 hover:text-green-300"
-                          >
-                            <Check className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => setEditingId(null)}
-                            className="text-gray-400 hover:text-gray-300"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEdit(item)}
-                            className="text-blue-400 hover:text-blue-300"
-                            disabled={item.status === 'sold'}
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            className="text-red-400 hover:text-red-300"
-                            disabled={item.status === 'sold' || item.status === 'reserved'}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                    </Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>
