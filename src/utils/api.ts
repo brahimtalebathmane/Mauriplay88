@@ -125,7 +125,9 @@ export const ProductsAPI = {
       .from('products')
       .select('*, platforms(name, logo_url)')
       .eq('is_deleted', false)
-      .order('created_at', { ascending: false });
+      .order('platform_id', { ascending: true })
+      .order('price_mru', { ascending: true })
+      .order('name', { ascending: true });
 
     if (error) handleSupabaseError(error, 'Fetch products');
 
@@ -140,7 +142,8 @@ export const ProductsAPI = {
       .select('*')
       .eq('platform_id', platformId)
       .eq('is_deleted', false)
-      .order('name');
+      .order('price_mru', { ascending: true })
+      .order('name', { ascending: true });
 
     if (error) handleSupabaseError(error, 'Fetch products by platform');
 

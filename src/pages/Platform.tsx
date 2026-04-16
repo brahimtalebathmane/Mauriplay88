@@ -41,7 +41,8 @@ export const PlatformPage = () => {
         .select('*')
         .eq('platform_id', id)
         .eq('is_deleted', false)
-        .order('name');
+        .order('price_mru', { ascending: true })
+        .order('name', { ascending: true });
 
       if (productsError) throw productsError;
 

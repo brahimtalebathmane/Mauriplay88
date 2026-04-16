@@ -42,7 +42,9 @@ export const Inventory = () => {
         .from('products')
         .select('*')
         .eq('is_deleted', false)
-        .order('name');
+        .order('platform_id', { ascending: true })
+        .order('price_mru', { ascending: true })
+        .order('name', { ascending: true });
 
       if (error) throw error;
       setProducts(data || []);
