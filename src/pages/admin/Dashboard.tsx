@@ -2,7 +2,10 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { Orders } from './Orders';
 import { Platforms } from './Platforms';
 import { Products } from './Products';
-import { Inventory } from './Inventory';
+import { InventoryLayout } from './inventory/InventoryLayout';
+import { InventoryPlatformList } from './inventory/InventoryPlatformList';
+import { InventoryPlatformProductsPage } from './inventory/InventoryPlatformProductsPage';
+import { InventoryProductCodesPage } from './inventory/InventoryProductCodesPage';
 import { PaymentMethods } from './PaymentMethods';
 import { Users } from './Users';
 import { WalletTopups } from './WalletTopups';
@@ -66,7 +69,11 @@ export const AdminDashboard = () => {
           <Route index element={<Orders />} />
           <Route path="orders" element={<Orders />} />
           <Route path="wallet-topups" element={<WalletTopups />} />
-          <Route path="inventory" element={<Inventory />} />
+          <Route path="inventory" element={<InventoryLayout />}>
+            <Route index element={<InventoryPlatformList />} />
+            <Route path="platform/:platformId" element={<InventoryPlatformProductsPage />} />
+            <Route path="product/:productId/codes" element={<InventoryProductCodesPage />} />
+          </Route>
           <Route path="platforms" element={<Platforms />} />
           <Route path="products" element={<Products />} />
           <Route path="payment-methods" element={<PaymentMethods />} />
