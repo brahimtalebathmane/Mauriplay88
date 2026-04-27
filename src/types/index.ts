@@ -38,6 +38,8 @@ export interface Product {
   /** Product logo URL (preferred). DB may also expose logo_url. */
   product_logo_url?: string;
   logo_url?: string;
+  /** Optional storefront region (e.g. USA, KSA). Omitted when not set. */
+  product_region?: string | null;
   is_deleted: boolean;
   created_at: string;
   updated_at: string;

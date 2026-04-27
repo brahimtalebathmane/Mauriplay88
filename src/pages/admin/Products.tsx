@@ -6,6 +6,8 @@ import { showToast } from '../../components/Toast';
 import { useStore } from '../../store/useStore';
 import type { Platform } from '../../types';
 import { ProductLogo } from '../../components/ProductLogo';
+import { ProductRegionBadge } from '../../components/ProductRegionBadge';
+import { PRODUCT_REGION_CODES } from '../../constants/productRegions';
 import { Plus, Trash2, CreditCard as Edit2 } from 'lucide-react';
 
 export const Products = () => {
@@ -20,6 +22,7 @@ export const Products = () => {
     name: '',
     price_mru: '',
     product_logo_url: '',
+    product_region: '',
   });
 
   useEffect(() => {
@@ -72,6 +75,7 @@ export const Products = () => {
           p_name: formData.name,
           p_price_mru: parseFloat(formData.price_mru),
           p_logo_url: formData.product_logo_url.trim() || null,
+          p_product_region: formData.product_region.trim(),
         });
 
         if (error) throw error;
@@ -89,6 +93,7 @@ export const Products = () => {
           p_name: formData.name,
           p_price_mru: parseFloat(formData.price_mru),
           p_logo_url: formData.product_logo_url.trim() || null,
+          p_product_region: formData.product_region.trim() || null,
         });
 
         if (error) throw error;
@@ -103,7 +108,7 @@ export const Products = () => {
 
       setShowForm(false);
       setEditingId(null);
-      setFormData({ platform_id: '', name: '', price_mru: '', product_logo_url: '' });
+      setFormData({ platform_id: '', name: '', price_mru: '', product_logo_url: '', product_region: '' });
       loadData();
     } catch (error: any) {
       console.error('Submit error:', error);
@@ -122,6 +127,7 @@ export const Products = () => {
       name: product.name,
       price_mru: product.price_mru.toString(),
       product_logo_url: product.logo_url ?? product.product_logo_url ?? '',
+      product_region: product.product_region ?? '',
     });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -161,7 +167,7 @@ export const Products = () => {
   const handleCancelEdit = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ platform_id: '', name: '', price_mru: '', product_logo_url: '' });
+    setFormData({ platform_id: '', name: '', price_mru: '', product_logo_url: '', product_region: '' });
   };
 
   return (
@@ -219,6 +225,22 @@ export const Products = () => {
               onChange={(e) => setFormData({ ...formData, product_logo_url: e.target.value })}
               placeholder="https://example.com/image.png"
             />
+            <div>
+              <label className="block text-white text-sm mb-2">منطقة المنتج (اختياري)</label>
+              <select
+                value={formData.product_region}
+                onChange={(e) => setFormData({ ...formData, product_region: e.target.value })}
+                className="w-full bg-gray-800 text-white border border-gray-700 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors"
+                dir="ltr"
+              >
+                <option value="">— بدون منطقة —</option>
+                {PRODUCT_REGION_CODES.map((code) => (
+                  <option key={code} value={code}>
+                    {code}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="flex gap-3 pt-4">
               <Button type="submit" className="flex-1">
                 {editingId ? 'تحديث المنتج' : 'حفظ المنتج'}
@@ -247,6 +269,9 @@ export const Products = () => {
               />
             </div>
             <h3 className="text-white text-xl font-bold mb-1 text-center">{product.name}</h3>
+            <div className="flex justify-center mb-2">
+              <ProductRegionBadge region={product.product_region} />
+            </div>
             <p className="text-blue-400 text-center text-sm mb-3 font-medium">{product.platform?.name}</p>
             <p className="text-white text-2xl font-bold text-center mb-5 bg-blue-600/10 py-2 rounded-lg">
               {product.price_mru} <span className="text-xs text-blue-400 font-normal">MRU</span>

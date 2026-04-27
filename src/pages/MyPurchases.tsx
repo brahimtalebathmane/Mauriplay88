@@ -9,6 +9,7 @@ import { useStore } from '../store/useStore';
 import type { OrderWithDetails, InventoryStatus } from '../types';
 import { showToast } from '../components/Toast';
 import { ProductLogo } from '../components/ProductLogo';
+import { ProductRegionBadge } from '../components/ProductRegionBadge';
 import { Copy, CheckCircle, Clock, XCircle, ChevronDown, ChevronUp, ExternalLink, Video, Ticket, ArrowRight } from 'lucide-react';
 
 export const MyPurchases = () => {
@@ -57,6 +58,7 @@ export const MyPurchases = () => {
           price_mru: order.product_price || 0,
           product_logo_url: order.product_logo_url ?? undefined,
           logo_url: order.product_logo_url ?? undefined,
+          product_region: order.product_region ?? undefined,
           is_deleted: !order.product_name,
           created_at: '',
           updated_at: ''
@@ -238,6 +240,9 @@ export const MyPurchases = () => {
                           <h3 className="text-xl font-black text-gray-100 group-hover:text-white transition-colors">
                             {order.product?.name}
                           </h3>
+                          <div className="mt-1 mb-0.5">
+                            <ProductRegionBadge region={order.product?.product_region} />
+                          </div>
                           <p className="text-cyan-500/70 text-sm font-bold uppercase tracking-wider">
                             {order.platform?.name}
                           </p>

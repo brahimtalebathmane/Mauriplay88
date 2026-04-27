@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import type { Platform, ProductWithStock } from '../types';
 import { showToast } from '../components/Toast';
 import { ProductLogo } from '../components/ProductLogo';
+import { ProductRegionBadge } from '../components/ProductRegionBadge';
 import { ArrowRight } from 'lucide-react';
 
 export const PlatformPage = () => {
@@ -195,6 +196,9 @@ export const PlatformPage = () => {
                   <div className="flex-1 text-center">
                     <div className="text-lg font-bold text-gray-200 group-hover:text-white transition-colors mb-1">
                       {product.name}
+                    </div>
+                    <div className="flex justify-center mb-1.5">
+                      <ProductRegionBadge region={product.product_region} />
                     </div>
                     <div
                       className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-bold ${

@@ -12,6 +12,7 @@ import { showToast } from '../components/Toast';
 import { logger } from '../utils/logger';
 import { notifyAdminNewOrder, notifyUserPurchaseSuccess } from '../utils/notifications';
 import { ProductLogo } from '../components/ProductLogo';
+import { ProductRegionBadge } from '../components/ProductRegionBadge';
 import { Wallet, CreditCard, Upload, X, CheckCircle2, AlertCircle, ShieldCheck, ArrowRight, MessageCircle } from 'lucide-react';
 
 export const Purchase = () => {
@@ -238,9 +239,12 @@ export const Purchase = () => {
               <h2 className="text-gray-400 text-sm font-black uppercase tracking-[0.3em] mb-2">
                 Order Summary
               </h2>
-              <h1 className="text-3xl font-black mb-4 break-words">
+              <h1 className="text-3xl font-black mb-2 break-words">
                 {product.name}
               </h1>
+              <div className="flex justify-center mb-4">
+                <ProductRegionBadge region={product.product_region} className="border-cyan-500/20 bg-cyan-500/5" />
+              </div>
               <div className="inline-flex items-baseline px-6 py-3 bg-cyan-500/10 border border-cyan-500/20 rounded-2xl">
                 <span className="text-4xl font-black text-cyan-400">
                   {product.price_mru}
