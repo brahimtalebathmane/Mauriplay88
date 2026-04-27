@@ -11,6 +11,8 @@ import { Register } from './pages/Register';
 import { VerifyOTP } from './pages/VerifyOTP';
 import { Home } from './pages/Home';
 import { PlatformPage } from './pages/Platform';
+import { PlatformRegionsPage } from './pages/PlatformRegions';
+import { PlatformShopPage } from './pages/PlatformShop';
 import { Purchase } from './pages/Purchase';
 import { OrderSuccess } from './pages/OrderSuccess';
 import { WalletPurchaseSuccess } from './pages/WalletPurchaseSuccess';
@@ -65,6 +67,8 @@ function App() {
         <Route path="/menu" element={<ProtectedRoute><Menu /></ProtectedRoute>} />
 
         <Route path="/" element={<Home />} />
+        <Route path="/platform/:id/regions" element={<PlatformRegionsPage />} />
+        <Route path="/platform/:id/shop/:regionKey" element={<PlatformShopPage />} />
         <Route path="/platform/:id" element={<PlatformPage />} />
         <Route path="/purchase/:id" element={<ProtectedRoute><Purchase /></ProtectedRoute>} />
         <Route path="/order-success/:id" element={<ProtectedRoute><OrderSuccess /></ProtectedRoute>} />
