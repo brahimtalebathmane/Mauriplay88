@@ -14,6 +14,10 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+function parseBoolFlag(v: unknown): boolean {
+  return v === true || v === "true" || v === 1 || v === "1";
+}
+
 function parseCodePayload(codeData: unknown): { success: boolean; message?: string; code?: string } | null {
   if (codeData == null) return null;
   let o: Record<string, unknown>;
@@ -80,9 +84,37 @@ Deno.serve(async (req: Request) => {
 
     const raw = await req.json().catch(() => ({})) as Record<string, unknown>;
     const phone_number = String(raw.phone_number ?? raw.phoneNumber ?? "").trim();
+    const for_registration = parseBoolFlag(raw.for_registration) || parseBoolFlag(raw.forRegistration);
 
     if (!phone_number) {
       return jsonResponse({ success: false, message: "Phone number is required" });
+    }
+
+    if (for_registration) {
+      if (!/^222[234][0-9]{7}$/.test(phone_number)) {
+        return jsonResponse({
+          success: false,
+          message: "رقم الهاتف غير صحيح. يجب أن يبدأ بـ 2 أو 3 أو 4",
+        });
+      }
+      const { data: existingUser, error: existingErr } = await supabase
+        .from("users")
+        .select("id")
+        .eq("phone_number", phone_number)
+        .maybeSingle();
+      if (existingErr) {
+        console.error("[send-otp] users lookup (registration):", existingErr);
+        return jsonResponse({
+          success: false,
+          message: existingErr.message || "تعذر التحقق من رقم الهاتف",
+        });
+      }
+      if (existingUser) {
+        return jsonResponse({
+          success: false,
+          message: "رقم الهاتف مسجل مسبقاً",
+        });
+      }
     }
 
     const { data: codeData, error: codeError } = await supabase.rpc(

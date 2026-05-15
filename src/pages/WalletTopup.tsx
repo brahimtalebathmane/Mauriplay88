@@ -9,7 +9,7 @@ import { PhoneInput } from '../components/PhoneInput';
 import { showToast } from '../components/Toast';
 import { notifyAdminNewTopup } from '../utils/notifications';
 import { BottomNav } from '../components/BottomNav';
-import { ArrowRight, Upload, X, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { ArrowRight, Upload, X, CheckCircle, Clock, XCircle, Copy } from 'lucide-react';
 
 interface PaymentMethod {
   id: string;
@@ -336,22 +336,28 @@ export const WalletTopup = () => {
                           onError={(e) => { (e.target as HTMLImageElement).src = '/icon-72.png'; }}
                         />
                       )}
-                      <div className="flex-1 text-right">
+                      <div className="flex-1 text-right min-w-0">
                         <p className="font-semibold text-white">{method.name}</p>
-                        <p
-                          role="presentation"
-                          className="text-sm text-gray-400 cursor-pointer hover:text-cyan-300 hover:underline font-mono"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            void navigator.clipboard.writeText(method.account_number).then(
-                              () => showToast('تم نسخ رقم الحساب', 'success'),
-                              () => showToast('لم يتم النسخ', 'error')
-                            );
-                          }}
-                        >
-                          {method.account_number}
-                        </p>
+                        <div className="flex items-center gap-2 justify-end flex-wrap mt-0.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              void navigator.clipboard.writeText(method.account_number).then(
+                                () => showToast('تم نسخ رقم الحساب', 'success'),
+                                () => showToast('لم يتم النسخ', 'error')
+                              );
+                            }}
+                            className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-bold text-cyan-300 hover:bg-white/10 hover:border-cyan-500/40 transition-colors"
+                          >
+                            <Copy className="w-3.5 h-3.5" aria-hidden />
+                            نسخ
+                          </button>
+                          <p className="text-sm text-gray-400 font-mono break-all text-right">
+                            {method.account_number}
+                          </p>
+                        </div>
                       </div>
                       {selectedPaymentMethod === method.id && (
                         <CheckCircle className="w-6 h-6 text-white flex-shrink-0" />
@@ -511,18 +517,24 @@ export const WalletTopup = () => {
                           <p className="text-gray-500">طريقة الدفع</p>
                           <p className="text-white font-medium">{topup.payment_method_name}</p>
                           {topup.account_number && (
-                            <p
-                              role="presentation"
-                              className="text-xs text-gray-400 cursor-pointer hover:text-cyan-300 hover:underline font-mono"
-                              onClick={() => {
-                                void navigator.clipboard.writeText(topup.account_number!).then(
-                                  () => showToast('تم نسخ رقم الحساب', 'success'),
-                                  () => showToast('لم يتم النسخ', 'error')
-                                );
-                              }}
-                            >
-                              {topup.account_number}
-                            </p>
+                            <div className="flex items-center gap-2 justify-end flex-wrap mt-0.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  void navigator.clipboard.writeText(topup.account_number!).then(
+                                    () => showToast('تم نسخ رقم الحساب', 'success'),
+                                    () => showToast('لم يتم النسخ', 'error')
+                                  );
+                                }}
+                                className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2 py-0.5 text-[10px] font-bold text-cyan-300 hover:bg-white/10 hover:border-cyan-500/40 transition-colors"
+                              >
+                                <Copy className="w-3 h-3" aria-hidden />
+                                نسخ
+                              </button>
+                              <p className="text-xs text-gray-400 font-mono break-all text-right">
+                                {topup.account_number}
+                              </p>
+                            </div>
                           )}
                         </div>
                       </div>

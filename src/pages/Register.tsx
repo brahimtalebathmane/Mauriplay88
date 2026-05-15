@@ -39,6 +39,15 @@ export const Register = () => {
     setLoading(true);
 
     try {
+      const { data: otpData, error: otpError } = await supabase.functions.invoke('send-otp', {
+        body: { phone_number: fullPhone, for_registration: true },
+      });
+
+      if (otpError || !otpData?.success) {
+        showToast(await getFunctionsInvokeMessage(otpError, otpData), 'error');
+        return;
+      }
+
       const { data, error } = await supabase.rpc('register_user', {
         p_phone_number: fullPhone,
         p_pin: pin,
@@ -47,19 +56,9 @@ export const Register = () => {
       if (error) throw error;
 
       if (data.success) {
-        showToast('تم إنشاء الحساب. جاري إرسال رمز التحقق...', 'success');
         localStorage.setItem('pending_phone', fullPhone);
         localStorage.setItem('temp_pin', pin);
-
-        const { data: otpData, error: otpError } = await supabase.functions.invoke('send-otp', {
-          body: { phone_number: fullPhone },
-        });
-
-        if (otpError || !otpData?.success) {
-          showToast(await getFunctionsInvokeMessage(otpError, otpData), 'error');
-          return;
-        }
-
+        showToast('تم إنشاء الحساب. تحقق من رمز واتساب', 'success');
         navigate('/verify-otp', { state: location.state });
       } else {
         showToast(data.message, 'error');

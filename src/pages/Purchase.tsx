@@ -13,7 +13,7 @@ import { logger } from '../utils/logger';
 import { notifyAdminNewOrder, notifyUserPurchaseSuccess, notifyAdminProductLowStock, notifyAdminProductOutOfStock } from '../utils/notifications';
 import { ProductLogo } from '../components/ProductLogo';
 import { ProductRegionBadge } from '../components/ProductRegionBadge';
-import { Wallet, CreditCard, Upload, X, CheckCircle2, AlertCircle, ShieldCheck, ArrowRight, MessageCircle } from 'lucide-react';
+import { Wallet, CreditCard, Upload, X, CheckCircle2, AlertCircle, ShieldCheck, ArrowRight, MessageCircle, Copy } from 'lucide-react';
 
 export const Purchase = () => {
   const { id } = useParams<{ id: string }>();
@@ -378,22 +378,28 @@ export const Purchase = () => {
                         </span>
                       </div>
                     )}
-                    <div className="flex-1 text-right">
+                    <div className="flex-1 text-right min-w-0">
                       <p className="text-white font-bold mb-1">{method.name}</p>
-                      <p
-                        role="presentation"
-                        className="text-sm font-mono text-gray-400 cursor-pointer hover:text-cyan-300 hover:underline"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          void navigator.clipboard.writeText(method.account_number).then(
-                            () => showToast('تم نسخ رقم الحساب', 'success'),
-                            () => showToast('لم يتم النسخ', 'error')
-                          );
-                        }}
-                      >
-                        {method.account_number}
-                      </p>
+                      <div className="flex items-center gap-2 justify-end flex-wrap">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            void navigator.clipboard.writeText(method.account_number).then(
+                              () => showToast('تم نسخ رقم الحساب', 'success'),
+                              () => showToast('لم يتم النسخ', 'error')
+                            );
+                          }}
+                          className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1 text-[11px] font-bold text-cyan-300 hover:bg-white/10 hover:border-cyan-500/40 transition-colors"
+                        >
+                          <Copy className="w-3.5 h-3.5" aria-hidden />
+                          نسخ
+                        </button>
+                        <p className="text-sm font-mono text-gray-400 break-all text-right">
+                          {method.account_number}
+                        </p>
+                      </div>
                     </div>
                   </div>
                   {selectedMethod?.id === method.id && (
