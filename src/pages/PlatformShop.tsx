@@ -35,6 +35,8 @@ export const PlatformShopPage = () => {
           .from('platforms')
           .select('*')
           .eq('id', id)
+          .eq('is_deleted', false)
+          .eq('is_enabled', true)
           .single();
 
         if (platformError) throw platformError;

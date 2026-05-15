@@ -34,6 +34,7 @@ export const PlatformsAPI = {
       .from('platforms')
       .select('*')
       .eq('is_deleted', false)
+      .eq('is_enabled', true)
       .order('created_at', { ascending: false });
 
     if (error) handleSupabaseError(error, 'Fetch platforms');
@@ -49,6 +50,7 @@ export const PlatformsAPI = {
       .select('*')
       .eq('id', id)
       .eq('is_deleted', false)
+      .eq('is_enabled', true)
       .single();
 
     if (error) handleSupabaseError(error, 'Fetch platform');

@@ -2,6 +2,9 @@
  * Edge Function: send OneSignal push notifications.
  * Triggered by the frontend after order/top-up/approval actions.
  * Requires: ONESIGNAL_APP_ID, ONESIGNAL_REST_API_KEY (Supabase secrets).
+ *
+ * Must stay self-contained: do not import from the Vite app (`../lib/supabase`, `lib/supabase`,
+ * `src/`, etc.). Supabase only bundles this folder — those imports fail deploy with "Module not found".
  */
 
 const allowedOrigins = new Set([
@@ -45,7 +48,9 @@ type NotificationType =
   | "purchase_success_user"
   | "topup_approved_user"
   | "order_approved_user"
-  | "wallet_activated_user";
+  | "wallet_activated_user"
+  | "stock_low_admin"
+  | "stock_out_admin";
 
 interface RequestBody {
   type: NotificationType;
@@ -136,7 +141,7 @@ function normalizeNotificationId(data: unknown): string | null {
   return s.length > 0 ? s : null;
 }
 
-function buildAdminPayload(type: NotificationType, baseUrl: string) {
+function buildAdminPayload(type: NotificationType, baseUrl: string, body?: Partial<RequestBody>) {
   const base = (baseUrl || "").replace(/\/$/, "");
   let heading_ar = "MauriPlay";
   let content_ar = "إشعار جديد";
@@ -150,6 +155,18 @@ function buildAdminPayload(type: NotificationType, baseUrl: string) {
     heading_ar = "طلب شحن محفظة";
     content_ar = "طلب شحن محفظة جديد بانتظار المراجعة.";
     url = `${base}/admin/wallet-topups`;
+  } else if (type === "stock_low_admin") {
+    heading_ar = "تنبيه مخزون منخفض";
+    content_ar = body?.product_name
+      ? `تبقى وحدة واحدة فقط من: ${body.product_name}. يرجى التجديد قبل النفاد.`
+      : "تبقى وحدة واحدة فقط من أحد المنتجات. راجع المخزون.";
+    url = `${base}/admin/products`;
+  } else if (type === "stock_out_admin") {
+    heading_ar = "نفاد المخزون";
+    content_ar = body?.product_name
+      ? `نفد المخزون بالكامل من: ${body.product_name}.`
+      : "نفد مخزون أحد المنتجات بالكامل.";
+    url = `${base}/admin/products`;
   }
 
   return {
@@ -257,11 +274,15 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const isAdmin = type === "new_order_admin" || type === "new_topup_admin";
+    const isAdmin =
+      type === "new_order_admin" ||
+      type === "new_topup_admin" ||
+      type === "stock_low_admin" ||
+      type === "stock_out_admin";
     let payload: Record<string, unknown>;
 
     if (isAdmin) {
-      payload = buildAdminPayload(type, baseUrl ?? "");
+      payload = buildAdminPayload(type, baseUrl ?? "", body as Partial<RequestBody>);
     } else {
       const userId = body.user_id;
       if (!userId) {

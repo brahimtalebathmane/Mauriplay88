@@ -10,7 +10,7 @@ import { useStore } from '../store/useStore';
 import type { Product, PaymentMethod } from '../types';
 import { showToast } from '../components/Toast';
 import { logger } from '../utils/logger';
-import { notifyAdminNewOrder, notifyUserPurchaseSuccess } from '../utils/notifications';
+import { notifyAdminNewOrder, notifyUserPurchaseSuccess, notifyAdminProductLowStock, notifyAdminProductOutOfStock } from '../utils/notifications';
 import { ProductLogo } from '../components/ProductLogo';
 import { ProductRegionBadge } from '../components/ProductRegionBadge';
 import { Wallet, CreditCard, Upload, X, CheckCircle2, AlertCircle, ShieldCheck, ArrowRight, MessageCircle } from 'lucide-react';
@@ -87,6 +87,15 @@ export const Purchase = () => {
           code: data.code,
           productName: data.product_name
         });
+
+        const remaining =
+          typeof data.remaining_available_stock === 'number' ? data.remaining_available_stock : undefined;
+        const stockProductName =
+          typeof data.product_name === 'string' && data.product_name.trim() !== ''
+            ? data.product_name
+            : product.name;
+        if (remaining === 0) notifyAdminProductOutOfStock(stockProductName);
+        else if (remaining === 1) notifyAdminProductLowStock(stockProductName);
 
         updateWalletBalance(user.wallet_balance - product.price_mru);
         Promise.resolve(supabase.rpc('get_user_balance', { p_user_id: user.id }))
@@ -371,7 +380,20 @@ export const Purchase = () => {
                     )}
                     <div className="flex-1 text-right">
                       <p className="text-white font-bold mb-1">{method.name}</p>
-                      <p className="text-sm font-mono text-gray-400">{method.account_number}</p>
+                      <p
+                        role="presentation"
+                        className="text-sm font-mono text-gray-400 cursor-pointer hover:text-cyan-300 hover:underline"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          void navigator.clipboard.writeText(method.account_number).then(
+                            () => showToast('تم نسخ رقم الحساب', 'success'),
+                            () => showToast('لم يتم النسخ', 'error')
+                          );
+                        }}
+                      >
+                        {method.account_number}
+                      </p>
                     </div>
                   </div>
                   {selectedMethod?.id === method.id && (

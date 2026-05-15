@@ -5,7 +5,7 @@ import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { showToast } from '../../components/Toast';
 import { notifyUserWalletActivated } from '../../utils/notifications';
-import { Copy, Wallet, Ban, CreditCard as Edit2, Save, X, Search } from 'lucide-react';
+import { Copy, Wallet, Ban, CreditCard as Edit2, Save, X, Search, Trash2 } from 'lucide-react';
 
 export const Users = () => {
   const { user: currentUser } = useStore();
@@ -182,6 +182,35 @@ export const Users = () => {
     }
   };
 
+  const handlePermanentDelete = async (userId: string, phone: string, role: string) => {
+    if (!currentUser?.phone_number) {
+      showToast('غير مصرح', 'error');
+      return;
+    }
+    if (role === 'admin') {
+      showToast('لا يمكن حذف حساب إداري', 'error');
+      return;
+    }
+    if (!confirm(`حذف نهائي للحساب ${phone}؟ لا يمكن التراجع.`)) return;
+    if (!confirm('تأكيد نهائي: سيتم مسح كل بيانات هذا المستخدم من النظام نهائياً.')) return;
+    try {
+      const { data, error } = await supabase.rpc('admin_delete_user_permanent', {
+        p_admin_phone: currentUser.phone_number,
+        p_user_id: userId,
+      });
+      if (error) throw error;
+      const result = data as { success?: boolean; message?: string };
+      if (result?.success) {
+        showToast(result.message || 'تم حذف الحساب', 'success');
+        await loadUsers();
+      } else {
+        showToast(result?.message || 'فشل الحذف', 'error');
+      }
+    } catch (error: any) {
+      showToast(error?.message || 'فشل الحذف', 'error');
+    }
+  };
+
   return (
     <div>
       <h2 className="text-white text-2xl font-bold mb-6">المستخدمون</h2>
@@ -339,6 +368,18 @@ export const Users = () => {
                       <span>{user.is_active ? 'تعطيل الحساب' : 'تفعيل الحساب'}</span>
                     </div>
                   </Button>
+                  {user.role !== 'admin' ? (
+                    <Button
+                      onClick={() => handlePermanentDelete(user.id, user.phone_number, user.role)}
+                      variant="danger"
+                      className="flex-1"
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <Trash2 className="w-4 h-4" />
+                        <span>حذف نهائي</span>
+                      </div>
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             ))

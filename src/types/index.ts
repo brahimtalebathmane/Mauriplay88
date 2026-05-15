@@ -25,6 +25,10 @@ export interface Platform {
   description?: string | null;
   website_url?: string;
   tutorial_video_url?: string;
+  /** When false, platform is hidden from the storefront (admin can re-enable). */
+  is_enabled?: boolean;
+  /** Lower values appear first on the home page (admin-controlled). */
+  display_order?: number;
   is_deleted: boolean;
   created_at: string;
   updated_at: string;

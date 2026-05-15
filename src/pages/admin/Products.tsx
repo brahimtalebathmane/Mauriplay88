@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
@@ -8,7 +8,7 @@ import type { Platform } from '../../types';
 import { ProductLogo } from '../../components/ProductLogo';
 import { ProductRegionBadge } from '../../components/ProductRegionBadge';
 import { PRODUCT_REGION_CODES } from '../../constants/productRegions';
-import { Plus, Trash2, CreditCard as Edit2 } from 'lucide-react';
+import { Plus, Trash2, CreditCard as Edit2, Search, X } from 'lucide-react';
 
 export const Products = () => {
   const { user } = useStore();
@@ -25,12 +25,30 @@ export const Products = () => {
     product_region: '',
   });
 
+  const [productSearch, setProductSearch] = useState('');
+  const [debouncedProductSearch, setDebouncedProductSearch] = useState('');
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedProductSearch(productSearch), 200);
+    return () => window.clearTimeout(t);
+  }, [productSearch]);
+
+  const filteredProducts = useMemo(() => {
+    const term = debouncedProductSearch.trim().toLowerCase();
+    if (!term) return products;
+    return products.filter((p) => String(p.name ?? '').toLowerCase().includes(term));
+  }, [products, debouncedProductSearch]);
+
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user?.phone_number]);
 
   const loadData = async () => {
     try {
+      const platformsPromise = user?.phone_number
+        ? supabase.rpc('get_admin_platforms', { p_admin_phone: user.phone_number })
+        : supabase.rpc('get_platforms');
+
       const [productsRes, platformsRes] = await Promise.all([
         supabase
           .from('products')
@@ -39,14 +57,14 @@ export const Products = () => {
           .order('platform_id', { ascending: true })
           .order('price_mru', { ascending: true })
           .order('name', { ascending: true }),
-        supabase.from('platforms').select('*').eq('is_deleted', false),
+        platformsPromise,
       ]);
 
       if (productsRes.error) throw productsRes.error;
       if (platformsRes.error) throw platformsRes.error;
 
       setProducts(productsRes.data || []);
-      setPlatforms(platformsRes.data || []);
+      setPlatforms((platformsRes.data as Platform[]) || []);
     } catch (error: any) {
       showToast('فشل تحميل المنتجات', 'error');
     } finally {
@@ -258,8 +276,30 @@ export const Products = () => {
         </form>
       )}
 
+      <div className="mb-4">
+        <div className="relative">
+          <Search className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Input
+            value={productSearch}
+            onChange={(e) => setProductSearch(e.target.value)}
+            placeholder="بحث باسم المنتج..."
+            className="pr-12"
+          />
+          {productSearch.trim() ? (
+            <button
+              type="button"
+              onClick={() => setProductSearch('')}
+              className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white p-2 rounded-lg"
+              title="مسح"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          ) : null}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map((product) => (
+        {filteredProducts.map((product) => (
           <div key={product.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-blue-500/50 transition-all duration-300">
             <div className="h-16 flex items-center justify-center mb-3 bg-black/20 rounded overflow-hidden">
               <ProductLogo
@@ -292,9 +332,11 @@ export const Products = () => {
             </div>
           </div>
         ))}
-        {products.length === 0 && (
+        {filteredProducts.length === 0 && (
           <div className="col-span-full text-center py-20 text-gray-600 border border-dashed border-gray-800 rounded-lg">
-            لا توجد منتجات حالياً
+            {products.length > 0 && debouncedProductSearch.trim()
+              ? 'لا توجد منتجات تطابق البحث'
+              : 'لا توجد منتجات حالياً'}
           </div>
         )}
       </div>

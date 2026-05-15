@@ -5,7 +5,7 @@ import { Input } from '../../components/Input';
 import { showToast } from '../../components/Toast';
 import { useStore } from '../../store/useStore';
 import type { Platform } from '../../types';
-import { Plus, Trash2, Edit2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, Loader2, ChevronUp, ChevronDown, Power } from 'lucide-react';
 
 export const Platforms = () => {
   const { user } = useStore();
@@ -22,15 +22,18 @@ export const Platforms = () => {
     description: '',
   });
 
-  useEffect(() => {
-    loadPlatforms();
-  }, []);
-
   const loadPlatforms = async () => {
     try {
       setLoading(true);
+      if (user?.phone_number) {
+        const { data, error } = await supabase.rpc('get_admin_platforms', {
+          p_admin_phone: user.phone_number,
+        });
+        if (error) throw error;
+        setPlatforms((data as Platform[]) || []);
+        return;
+      }
       const { data, error } = await supabase.rpc('get_platforms');
-
       if (error) {
         const fallback = await supabase
           .from('platforms')
@@ -47,6 +50,77 @@ export const Platforms = () => {
       showToast(error?.message || 'فشل تحميل المنصات', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadPlatforms();
+  }, [user?.phone_number]);
+
+  const movePlatform = async (index: number, direction: -1 | 1) => {
+    if (!user?.phone_number) {
+      showToast('يجب تسجيل الدخول كمسؤول', 'error');
+      return;
+    }
+    const target = index + direction;
+    if (target < 0 || target >= platforms.length) return;
+    const reordered = [...platforms];
+    const tmp = reordered[index];
+    reordered[index] = reordered[target];
+    reordered[target] = tmp;
+    const ids = reordered.map((p) => p.id);
+    try {
+      setSubmitting(true);
+      const { data, error } = await supabase.rpc('admin_reorder_platforms', {
+        p_admin_phone: user.phone_number,
+        p_ordered_ids: ids,
+      });
+      if (error) throw error;
+      const result = data as { success?: boolean; message?: string };
+      if (result?.success === false) {
+        showToast(result.message || 'فشل حفظ الترتيب', 'error');
+        return;
+      }
+      setPlatforms(reordered);
+      showToast(result?.message || 'تم حفظ الترتيب', 'success');
+    } catch (error: any) {
+      const raw = error?.message || '';
+      const msg = /schema cache|could not find the function|404/i.test(raw)
+        ? 'الخادم لم يحدّث بعد. تأكد من تطبيق migrations (admin_reorder_platforms).'
+        : raw || 'فشل حفظ الترتيب';
+      showToast(msg, 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const togglePlatformEnabled = async (platformId: string) => {
+    if (!user?.phone_number) {
+      showToast('غير مصرح', 'error');
+      return;
+    }
+    try {
+      setSubmitting(true);
+      const { data, error } = await supabase.rpc('admin_toggle_platform_enabled', {
+        p_admin_phone: user.phone_number,
+        p_platform_id: platformId,
+      });
+      if (error) throw error;
+      const result = data as { success?: boolean; message?: string };
+      if (result?.success === false) {
+        showToast(result.message || 'فشل التحديث', 'error');
+        return;
+      }
+      showToast(result?.message || 'تم التحديث', 'success');
+      await loadPlatforms();
+    } catch (error: any) {
+      const raw = error?.message || '';
+      const msg = /schema cache|could not find the function|404/i.test(raw)
+        ? 'الخادم لم يحدّث بعد. تأكد من تطبيق migrations (admin_toggle_platform_enabled).'
+        : raw || 'فشل التحديث';
+      showToast(msg, 'error');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -268,7 +342,7 @@ export const Platforms = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {platforms.map((platform) => (
+          {platforms.map((platform, index) => (
             <div key={platform.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-cyan-500/50 transition-all duration-300 shadow-sm">
               <div className="h-24 flex items-center justify-center mb-4 bg-black/40 rounded-lg p-4">
                 <img
@@ -278,7 +352,48 @@ export const Platforms = () => {
                   onError={(e) => { (e.target as HTMLImageElement).src = '/icon-72.png'; }}
                 />
               </div>
-              <h3 className="text-white text-center font-bold mb-4 text-lg">{platform.name}</h3>
+              <div className="flex items-center justify-center gap-2 mb-2 flex-wrap">
+                <h3 className="text-white text-center font-bold text-lg">{platform.name}</h3>
+                {platform.is_enabled === false ? (
+                  <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                    معطلة عن العرض
+                  </span>
+                ) : null}
+              </div>
+              <div className="flex gap-2 mb-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="flex-1 py-2 text-xs"
+                  disabled={submitting || index === 0}
+                  onClick={() => void movePlatform(index, -1)}
+                  title="أعلى في القائمة"
+                >
+                  <ChevronUp className="w-4 h-4 mx-auto" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="flex-1 py-2 text-xs"
+                  disabled={submitting || index === platforms.length - 1}
+                  onClick={() => void movePlatform(index, 1)}
+                  title="أسفل في القائمة"
+                >
+                  <ChevronDown className="w-4 h-4 mx-auto" />
+                </Button>
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full mb-3 py-2 text-sm border border-white/10"
+                disabled={submitting || !user?.phone_number}
+                onClick={() => void togglePlatformEnabled(platform.id)}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Power className="w-3.5 h-3.5" />
+                  <span>{platform.is_enabled === false ? 'تفعيل العرض' : 'تعطيل العرض'}</span>
+                </div>
+              </Button>
               <div className="flex gap-2">
                 <Button
                   onClick={() => handleEdit(platform)}

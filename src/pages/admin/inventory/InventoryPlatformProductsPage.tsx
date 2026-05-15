@@ -32,7 +32,7 @@ export const InventoryPlatformProductsPage = () => {
     setLoading(true);
     try {
       const [platRes, prodRes, invRes] = await Promise.all([
-        supabase.from('platforms').select('*').eq('id', platformId).eq('is_deleted', false).maybeSingle(),
+        supabase.rpc('get_admin_platforms', { p_admin_phone: user.phone_number }),
         supabase
           .from('products')
           .select('*, platform:platforms(name)')
@@ -44,12 +44,13 @@ export const InventoryPlatformProductsPage = () => {
       ]);
 
       if (platRes.error) throw platRes.error;
-      if (!platRes.data) {
+      const plat = ((platRes.data as Platform[]) || []).find((x) => x.id === platformId);
+      if (!plat) {
         showToast('المنصة غير موجودة', 'error');
         navigate('/admin/inventory', { replace: true });
         return;
       }
-      setPlatform(platRes.data as Platform);
+      setPlatform(plat);
 
       if (prodRes.error) throw prodRes.error;
       setProducts((prodRes.data as ProductWithPlatform[]) || []);

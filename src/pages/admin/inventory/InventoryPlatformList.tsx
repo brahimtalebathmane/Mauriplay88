@@ -26,18 +26,13 @@ export const InventoryPlatformList = () => {
     setLoading(true);
     try {
       const [platRes, prodRes, invRes] = await Promise.all([
-        supabase.rpc('get_platforms'),
+        supabase.rpc('get_admin_platforms', { p_admin_phone: user.phone_number }),
         supabase.from('products').select('id, platform_id').eq('is_deleted', false),
         supabase.rpc('admin_get_inventory', { p_admin_phone: user.phone_number }),
       ]);
 
-      if (platRes.error) {
-        const fb = await supabase.from('platforms').select('*').eq('is_deleted', false).order('name');
-        if (fb.error) throw fb.error;
-        setPlatforms((fb.data as Platform[]) || []);
-      } else {
-        setPlatforms((platRes.data as Platform[]) || []);
-      }
+      if (platRes.error) throw platRes.error;
+      setPlatforms((platRes.data as Platform[]) || []);
 
       if (prodRes.error) throw prodRes.error;
       setProductRows((prodRes.data as { id: string; platform_id: string }[]) || []);
@@ -75,9 +70,7 @@ export const InventoryPlatformList = () => {
     return { productsPer, codesPer };
   }, [inventory, productRows, productPlatformMap]);
 
-  const sortedPlatforms = useMemo(() => {
-    return [...platforms].sort((a, b) => a.name.localeCompare(b.name, 'ar'));
-  }, [platforms]);
+  const sortedPlatforms = useMemo(() => [...platforms], [platforms]);
 
   if (loading && platforms.length === 0) {
     return (

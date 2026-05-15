@@ -338,7 +338,20 @@ export const WalletTopup = () => {
                       )}
                       <div className="flex-1 text-right">
                         <p className="font-semibold text-white">{method.name}</p>
-                        <p className="text-sm text-gray-400">{method.account_number}</p>
+                        <p
+                          role="presentation"
+                          className="text-sm text-gray-400 cursor-pointer hover:text-cyan-300 hover:underline font-mono"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            void navigator.clipboard.writeText(method.account_number).then(
+                              () => showToast('تم نسخ رقم الحساب', 'success'),
+                              () => showToast('لم يتم النسخ', 'error')
+                            );
+                          }}
+                        >
+                          {method.account_number}
+                        </p>
                       </div>
                       {selectedPaymentMethod === method.id && (
                         <CheckCircle className="w-6 h-6 text-white flex-shrink-0" />
@@ -498,7 +511,18 @@ export const WalletTopup = () => {
                           <p className="text-gray-500">طريقة الدفع</p>
                           <p className="text-white font-medium">{topup.payment_method_name}</p>
                           {topup.account_number && (
-                            <p className="text-xs text-gray-400">{topup.account_number}</p>
+                            <p
+                              role="presentation"
+                              className="text-xs text-gray-400 cursor-pointer hover:text-cyan-300 hover:underline font-mono"
+                              onClick={() => {
+                                void navigator.clipboard.writeText(topup.account_number!).then(
+                                  () => showToast('تم نسخ رقم الحساب', 'success'),
+                                  () => showToast('لم يتم النسخ', 'error')
+                                );
+                              }}
+                            >
+                              {topup.account_number}
+                            </p>
                           )}
                         </div>
                       </div>

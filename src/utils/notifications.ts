@@ -17,7 +17,9 @@ export type NotificationType =
   | 'purchase_success_user'
   | 'topup_approved_user'
   | 'order_approved_user'
-  | 'wallet_activated_user';
+  | 'wallet_activated_user'
+  | 'stock_low_admin'
+  | 'stock_out_admin';
 
 export interface NotificationPayload {
   type: NotificationType;
@@ -138,6 +140,16 @@ export function notifyUserTopupApproved(userId: string, amount?: number): void {
 /** Notify user: direct (manual) order approved. */
 export function notifyUserOrderApproved(userId: string): void {
   triggerNotification({ type: 'order_approved_user', user_id: userId });
+}
+
+/** Notify admins: only one sellable unit remains for a product. */
+export function notifyAdminProductLowStock(productName: string): void {
+  triggerNotification({ type: 'stock_low_admin', product_name: productName });
+}
+
+/** Notify admins: product has zero available inventory after the last sale. */
+export function notifyAdminProductOutOfStock(productName: string): void {
+  triggerNotification({ type: 'stock_out_admin', product_name: productName });
 }
 
 /** Notify user: wallet was activated by admin. */

@@ -38,21 +38,19 @@ export const Home = () => {
 
   const loadPlatforms = async () => {
     try {
-      const { data: platformsData, error: platformsError } = await supabase
-        .from('platforms')
-        .select('*')
-        .eq('is_deleted', false)
-        .order('created_at', { ascending: false });
+      const { data: platformsData, error: platformsError } = await supabase.rpc('get_platforms');
 
       if (platformsError) throw platformsError;
 
-      if (!platformsData || platformsData.length === 0) {
+      const storefrontPlatforms = (platformsData as Platform[] | null) ?? [];
+
+      if (storefrontPlatforms.length === 0) {
         setPlatforms([]);
         setLoading(false);
         return;
       }
 
-      const platformIds = platformsData.map((p) => p.id);
+      const platformIds = storefrontPlatforms.map((p) => p.id);
 
       const { data: productsData, error: productsError } = await supabase
         .from('products')
@@ -83,7 +81,7 @@ export const Home = () => {
         });
       }
 
-      const platformsWithStats: PlatformWithStats[] = platformsData.map((platform) => {
+      const platformsWithStats: PlatformWithStats[] = storefrontPlatforms.map((platform) => {
         const productIds = productsByPlatform.get(platform.id) || [];
         const totalStock = productIds.reduce((sum, productId) => {
           return sum + (stockByProduct.get(productId) || 0);
