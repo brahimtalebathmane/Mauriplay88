@@ -249,6 +249,19 @@ export const Orders = () => {
                 </div>
               )}
 
+              <div className="mb-4">
+                <p className="text-gray-400 text-sm mb-2">تاريخ الطلب</p>
+                <p className="text-white">
+                  {new Date(order.created_at).toLocaleDateString('ar-MR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </p>
+              </div>
+
               {order.status === 'pending' && (
                 <div className="flex gap-3 mt-4">
                   <Button
