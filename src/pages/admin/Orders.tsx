@@ -4,7 +4,7 @@ import { useStore } from '../../store/useStore';
 import { Button } from '../../components/Button';
 import { SkeletonList } from '../../components/LoadingScreen';
 import { showToast } from '../../components/Toast';
-import { notifyUserOrderApproved, notifyAdminProductLowStock, notifyAdminProductOutOfStock } from '../../utils/notifications';
+import { notifyUserOrderApproved, notifyAdminProductOutOfStock } from '../../utils/notifications';
 import { logger } from '../../utils/logger';
 import { CheckCircle, XCircle, Eye } from 'lucide-react';
 
@@ -127,9 +127,8 @@ export const Orders = () => {
         if (orderRow?.user_id) notifyUserOrderApproved(orderRow.user_id);
         const remaining = (result as { remaining_available_stock?: unknown }).remaining_available_stock;
         const productName = orderRow?.product?.name;
-        if (typeof remaining === 'number' && typeof productName === 'string' && productName.trim() !== '') {
-          if (remaining === 0) notifyAdminProductOutOfStock(productName);
-          else if (remaining === 1) notifyAdminProductLowStock(productName);
+        if (remaining === 0 && typeof productName === 'string' && productName.trim() !== '') {
+          notifyAdminProductOutOfStock(productName);
         }
         showToast('تمت الموافقة على الطلب', 'success');
         loadOrders();

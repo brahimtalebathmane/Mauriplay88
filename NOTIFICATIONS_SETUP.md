@@ -39,6 +39,16 @@ supabase functions deploy send-notification
 | Wallet top-up approved       | User              | Push → `/wallet`           |
 | Manual order approved        | User              | Push → `/my-purchases`      |
 | Wallet activated by admin    | User              | Push → `/wallet`           |
+| Product stock reaches 1 unit (after sale) | Admin | Push → `/admin/products` (server trigger + OneSignal) |
+
+### Low-stock monitoring (server-side)
+
+When an inventory row is marked **sold** (or an available code is removed) and exactly **one** `available` unit remains for that product:
+
+1. A Postgres trigger writes to `inventory_low_stock_events` and calls `send-notification` via **pg_net** (immediate, no browser required).
+2. Admins with the dashboard open also get an in-app toast via **Realtime** (`LowStockAlertListener`).
+
+Apply migration `20260602120000_inventory_low_stock_instant_alert.sql` on the database. The trigger uses `pg_net`; ensure the `pg_net` extension is enabled (the migration enables it).
 
 ## Testing
 

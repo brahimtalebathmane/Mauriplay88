@@ -9,6 +9,7 @@ import { InventoryProductCodesPage } from './inventory/InventoryProductCodesPage
 import { PaymentMethods } from './PaymentMethods';
 import { Users } from './Users';
 import { WalletTopups } from './WalletTopups';
+import { LowStockAlertListener } from '../../components/LowStockAlertListener';
 import { ShoppingBag, Package, Grid3x3, CreditCard, Users as UsersIcon, ArrowLeft, Wallet } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -27,6 +28,7 @@ export const AdminDashboard = () => {
 
   return (
     <div className="min-h-screen bg-page">
+      <LowStockAlertListener />
       <div className="bg-card border-b border-white/10 sticky top-0 z-40">
         <div className="max-w-content-max mx-auto px-page-x py-4">
           <div className="flex items-center justify-between mb-4">

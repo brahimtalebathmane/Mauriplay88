@@ -10,7 +10,7 @@ import { useStore } from '../store/useStore';
 import type { Product, PaymentMethod } from '../types';
 import { showToast } from '../components/Toast';
 import { logger } from '../utils/logger';
-import { notifyAdminNewOrder, notifyUserPurchaseSuccess, notifyAdminProductLowStock, notifyAdminProductOutOfStock } from '../utils/notifications';
+import { notifyAdminNewOrder, notifyUserPurchaseSuccess, notifyAdminProductOutOfStock } from '../utils/notifications';
 import { ProductLogo } from '../components/ProductLogo';
 import { ProductRegionBadge } from '../components/ProductRegionBadge';
 import { Wallet, CreditCard, Upload, X, CheckCircle2, AlertCircle, ShieldCheck, ArrowRight, MessageCircle, Copy } from 'lucide-react';
@@ -95,7 +95,6 @@ export const Purchase = () => {
             ? data.product_name
             : product.name;
         if (remaining === 0) notifyAdminProductOutOfStock(stockProductName);
-        else if (remaining === 1) notifyAdminProductLowStock(stockProductName);
 
         updateWalletBalance(user.wallet_balance - product.price_mru);
         Promise.resolve(supabase.rpc('get_user_balance', { p_user_id: user.id }))
