@@ -1,11 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Button } from '../../components/Button';
 import { Input } from '../../components/Input';
 import { showToast } from '../../components/Toast';
 import { useStore } from '../../store/useStore';
 import type { Platform } from '../../types';
+import { dedupeById } from '../../utils/dedupeById';
 import { Plus, Trash2, Edit2, Loader2, ChevronUp, ChevronDown, Power } from 'lucide-react';
+
+function sortPlatforms(items: Platform[]): Platform[] {
+  return [...items].sort((a, b) => {
+    const orderA = a.display_order ?? 0;
+    const orderB = b.display_order ?? 0;
+    if (orderA !== orderB) return orderA - orderB;
+    return a.name.localeCompare(b.name, 'ar');
+  });
+}
+
+function normalizePlatforms(data: Platform[] | null | undefined): Platform[] {
+  return sortPlatforms(dedupeById(data ?? []));
+}
 
 export const Platforms = () => {
   const { user } = useStore();
@@ -30,7 +44,7 @@ export const Platforms = () => {
           p_admin_phone: user.phone_number,
         });
         if (error) throw error;
-        setPlatforms((data as Platform[]) || []);
+        setPlatforms(normalizePlatforms(data as Platform[]));
         return;
       }
       const { data, error } = await supabase.rpc('get_platforms');
@@ -41,10 +55,10 @@ export const Platforms = () => {
           .eq('is_deleted', false)
           .order('name');
         if (fallback.error) throw fallback.error;
-        setPlatforms((fallback.data as Platform[]) || []);
+        setPlatforms(normalizePlatforms(fallback.data as Platform[]));
         return;
       }
-      setPlatforms((data as Platform[]) || []);
+      setPlatforms(normalizePlatforms(data as Platform[]));
     } catch (error: any) {
       console.error('Load Error:', error);
       showToast(error?.message || 'فشل تحميل المنصات', 'error');
@@ -81,7 +95,7 @@ export const Platforms = () => {
         showToast(result.message || 'فشل حفظ الترتيب', 'error');
         return;
       }
-      setPlatforms(reordered);
+      setPlatforms(normalizePlatforms(reordered));
       showToast(result?.message || 'تم حفظ الترتيب', 'success');
     } catch (error: any) {
       const raw = error?.message || '';
@@ -249,6 +263,8 @@ export const Platforms = () => {
     setFormData({ name: '', logo_url: '', website_url: '', tutorial_video_url: '', description: '' });
   };
 
+  const displayPlatforms = useMemo(() => normalizePlatforms(platforms), [platforms]);
+
   return (
     <div className="p-4 md:p-0">
       <div className="flex justify-between items-center mb-6">
@@ -335,15 +351,18 @@ export const Platforms = () => {
         </form>
       )}
 
-      {loading && platforms.length === 0 ? (
+      {loading && displayPlatforms.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-gray-500">
           <Loader2 className="w-10 h-10 animate-spin mb-4 text-cyan-500" />
           <p className="italic">جاري تحديث البيانات...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {platforms.map((platform, index) => (
-            <div key={platform.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-cyan-500/50 transition-all duration-300 shadow-sm">
+        <div className="admin-platform-grid">
+          {displayPlatforms.map((platform, index) => (
+            <div
+              key={platform.id}
+              className="platform-card-rtl bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-cyan-500/50 transition-colors duration-200 shadow-sm"
+            >
               <div className="h-24 flex items-center justify-center mb-4 bg-black/40 rounded-lg p-4">
                 <img
                   src={platform.logo_url}
@@ -375,7 +394,7 @@ export const Platforms = () => {
                   type="button"
                   variant="secondary"
                   className="flex-1 py-2 text-xs"
-                  disabled={submitting || index === platforms.length - 1}
+                  disabled={submitting || index === displayPlatforms.length - 1}
                   onClick={() => void movePlatform(index, 1)}
                   title="أسفل في القائمة"
                 >
@@ -421,7 +440,7 @@ export const Platforms = () => {
             </div>
           ))}
 
-          {platforms.length === 0 && !loading && (
+          {displayPlatforms.length === 0 && !loading && (
             <div className="col-span-full text-center py-20 bg-gray-900/50 rounded-lg border border-dashed border-gray-800">
               <p className="text-gray-500 mb-2">لا توجد منصات متاحة حالياً</p>
               <p className="text-sm text-gray-600">اضغط على "إضافة منصة جديدة" للبدء</p>

@@ -15,7 +15,7 @@
 @layer components {
   .page-wrap {
     @apply min-h-screen bg-page text-white;
-    padding-bottom: max(5rem, env(safe-area-inset-bottom));
+    padding-bottom: max(6.5rem, calc(env(safe-area-inset-bottom, 0px) + 5.75rem));
   }
 
   .support-fab {
@@ -60,6 +60,57 @@
   }
   .card-base-lg {
     @apply rounded-card-lg border border-white/10 bg-card overflow-hidden;
+  }
+
+  /*
+   * Platform grids use LTR placement on this RTL app so auto-flow stays stable.
+   * With html[dir=rtl] and * { direction: rtl }, multi-column grids can stack
+   * items on top of each other in WebKit/Android once enough rows exist (~6 cards).
+   * Card content stays RTL via .platform-card-rtl / dir on the tile.
+   */
+  .storefront-platform-grid,
+  .admin-platform-grid {
+    display: grid;
+    width: 100%;
+    gap: 1rem;
+    direction: ltr;
+    grid-auto-flow: row;
+    grid-auto-rows: minmax(min-content, auto);
+    align-items: start;
+  }
+
+  .storefront-platform-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  @media (min-width: 640px) {
+    .storefront-platform-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      max-width: 42rem;
+      margin-inline: auto;
+    }
+  }
+
+  .admin-platform-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @media (min-width: 768px) {
+    .admin-platform-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .admin-platform-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .platform-card-rtl {
+    direction: rtl;
+    min-width: 0;
+    isolation: isolate;
   }
 }
 

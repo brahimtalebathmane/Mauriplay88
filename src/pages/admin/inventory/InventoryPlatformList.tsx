@@ -6,6 +6,7 @@ import { useStore } from '../../../store/useStore';
 import type { Platform } from '../../../types';
 import { Loader2, Package } from 'lucide-react';
 import type { AdminInventoryRow } from './inventoryHelpers';
+import { dedupeById } from '../../../utils/dedupeById';
 
 export const InventoryPlatformList = () => {
   const { user } = useStore();
@@ -32,7 +33,7 @@ export const InventoryPlatformList = () => {
       ]);
 
       if (platRes.error) throw platRes.error;
-      setPlatforms((platRes.data as Platform[]) || []);
+      setPlatforms(dedupeById((platRes.data as Platform[]) || []));
 
       if (prodRes.error) throw prodRes.error;
       setProductRows((prodRes.data as { id: string; platform_id: string }[]) || []);
@@ -98,7 +99,7 @@ export const InventoryPlatformList = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="admin-platform-grid">
         {sortedPlatforms.map((platform) => {
           const nProducts = statsByPlatform.productsPer.get(platform.id) ?? 0;
           const nCodes = statsByPlatform.codesPer.get(platform.id) ?? 0;
@@ -106,7 +107,7 @@ export const InventoryPlatformList = () => {
             <Link
               key={platform.id}
               to={`platform/${platform.id}`}
-              className="group bg-gray-900 rounded-xl p-5 border border-gray-800 hover:border-cyan-500/40 transition-all shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50"
+              className="platform-card-rtl group bg-gray-900 rounded-xl p-5 border border-gray-800 hover:border-cyan-500/40 transition-colors shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50"
             >
               <div className="flex gap-4 items-center">
                 <div className="w-16 h-16 shrink-0 rounded-lg bg-black/40 flex items-center justify-center p-2 overflow-hidden">

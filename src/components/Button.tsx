@@ -39,7 +39,9 @@ export const Button = ({
     }
   };
 
-  const baseClasses = 'w-full min-h-[48px] py-3 px-5 rounded-btn font-semibold text-base transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
+  const isFlexGrowChild = /\bflex-1\b/.test(className);
+  const widthClasses = isFlexGrowChild ? 'min-w-0 flex-1 w-auto' : 'w-full';
+  const baseClasses = `${widthClasses} min-h-[48px] py-3 px-5 rounded-btn font-semibold text-base transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed`;
 
   const variantClasses = {
     primary: 'bg-white text-black hover:bg-gray-200 active:scale-[0.99]',

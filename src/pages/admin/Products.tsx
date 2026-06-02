@@ -298,9 +298,9 @@ export const Products = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="admin-platform-grid">
         {filteredProducts.map((product) => (
-          <div key={product.id} className="bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-blue-500/50 transition-all duration-300">
+          <div key={product.id} className="platform-card-rtl bg-gray-900 rounded-lg p-6 border border-gray-800 hover:border-blue-500/50 transition-colors duration-200">
             <div className="h-16 flex items-center justify-center mb-3 bg-black/20 rounded overflow-hidden">
               <ProductLogo
                 logoUrl={product.product_logo_url ?? product.logo_url}
